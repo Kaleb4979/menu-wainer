@@ -139,23 +139,13 @@
             justify-content: space-between;
             align-items: center;
         }
-        .cart-float button {
-            background-color: var(--color-wainer-dark);
-            color: var(--color-wainer-gold);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.1em;
-            transition: background-color 0.2s;
-        }
         .cart-total {
             font-size: 1.4em;
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 5px;
+            text-align: left;
         }
         
         /* Sección de Opciones de Pedido (Delivery) */
@@ -168,6 +158,16 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-direction: column; /* Cambiado a columna para el detalle del delivery */
+            align-items: flex-start;
+        }
+        
+        .delivery-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px;
         }
 
         .order-options label {
@@ -185,6 +185,12 @@
             accent-color: var(--color-wainer-gold);
         }
 
+        .delivery-info {
+            font-size: 0.9em;
+            color: #ccc;
+            margin-left: 30px; /* Alineación visual */
+        }
+        
         .loading-message {
             color: var(--color-wainer-gold);
             font-weight: bold;
@@ -204,13 +210,19 @@
     <main class="menu-container">
         
         <div class="order-options">
-            <label for="delivery-checkbox">
-                🚚 ¿Desea Delivery?
-            </label>
-            <input type="checkbox" id="delivery-checkbox">
+            <div class="delivery-toggle">
+                <label for="delivery-checkbox">
+                    🚚 ¿Desea Delivery?
+                </label>
+                <input type="checkbox" id="delivery-checkbox" onchange="updateCartDisplay()">
+            </div>
+            <div id="delivery-details" class="delivery-info">
+                Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)
+            </div>
         </div>
+        
         <div id="loading-location" class="loading-message" style="display:none;">
-            Obteniendo tu ubicación... Por favor, acepta el permiso.
+            Obteniendo tu ubicación para calcular el costo... Por favor, acepta el permiso.
         </div>
         
         <section class="menu-category">
@@ -560,11 +572,36 @@
     <script>
         const WHATSAPP_NUMBER = '584120719505';
         let cart = {}; 
+        
+        // *** 🚨 DEBES REEMPLAZAR ESTOS VALORES CON LAS COORDENADAS DE TU NEGOCIO 🚨 ***
+        const ORIGIN_LAT = 10.640243; 
+        const ORIGIN_LON = -71.611100; 
+        // **************************************************************************
+
+
+        // --- Funciones de Utilidad ---
+
+        // Función de Haversine para calcular la distancia entre dos coordenadas (en km)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radio de la Tierra en kilómetros
+            const toRad = (value) => (value * Math.PI) / 180;
+
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // Distancia en km
+            
+            return distance;
+        }
+
 
         // --- Funciones de Carrito ---
         function updateCart(itemId, change) {
             const itemElement = document.querySelector(`[data-id="${itemId}"]`);
-            const quantityElement = itemElement.querySelector('.item-quantity');
             const itemPrice = parseFloat(itemElement.getAttribute('data-price'));
             
             let currentQuantity = cart[itemId] ? cart[itemId].quantity : 0;
@@ -584,74 +621,119 @@
                 };
             }
 
-            quantityElement.textContent = newQuantity;
             updateCartDisplay();
         }
 
         function updateCartDisplay() {
-            let total = 0;
+            let subtotal = 0;
             let totalItems = 0;
             
             for (const id in cart) {
                 const item = cart[id];
-                total += item.price * item.quantity;
+                subtotal += item.price * item.quantity;
                 totalItems += item.quantity;
             }
 
-            document.getElementById('cart-total-price').textContent = total.toFixed(2);
-
+            const isDelivery = document.getElementById('delivery-checkbox').checked;
+            const deliveryDetails = document.getElementById('delivery-details');
             const checkoutBtn = document.getElementById('checkout-btn');
-            if (totalItems > 0) {
-                checkoutBtn.disabled = false;
-                checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - ${total.toFixed(2)}$`;
-            } else {
-                checkoutBtn.disabled = true;
-                checkoutBtn.textContent = `Hacer Pedido por WhatsApp`;
-            }
-            
+
+            // Actualiza las cantidades visuales
             document.querySelectorAll('.menu-item').forEach(itemEl => {
                 const itemId = itemEl.getAttribute('data-id');
                 const quantityElement = itemEl.querySelector('.item-quantity');
                 quantityElement.textContent = cart[itemId] ? cart[itemId].quantity : 0;
             });
-        }
-        
-        // --- Lógica de Geolocalización y Envío ---
 
-        function sendOrder(locationMessage = "") {
-            // 1. CONSTRUYE EL MENSAJE DEL PEDIDO
-            let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
-            let total = 0;
+            // Lógica del botón de Checkout
+            if (totalItems > 0) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - ${subtotal.toFixed(2)}$`;
+            } else {
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = `Hacer Pedido por WhatsApp`;
+            }
             
-            // Ítems del pedido
-            for (const id in cart) {
-                const item = cart[id];
-                const subtotal = item.price * item.quantity;
-                total += subtotal;
-                message += `*${item.quantity}x* ${item.name} = ${subtotal.toFixed(2)}$\n`;
+            // Lógica del Delivery
+            if (isDelivery) {
+                // Si hay delivery, el total es SÓLO el subtotal de comida (el envío se calcula después)
+                document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
+                deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación.";
+                checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
+                
+                if (totalItems === 0) {
+                     deliveryDetails.textContent = "Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)";
+                }
+                
+            } else {
+                // Si no hay delivery, el total es el subtotal de comida
+                document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
+                deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
             }
 
-            // TOTALES y Delivery
-            const isDelivery = document.getElementById('delivery-checkbox').checked;
-            
-            message += "\n----------------------------------\n";
-            message += `✅ *TIPO DE SERVICIO:* ${isDelivery ? "DELIVERY 🚚" : "RETIRO EN TIENDA 🚶"}\n`;
-            message += `💰 *TOTAL A PAGAR:* ${total.toFixed(2)}$\n`;
-            message += "----------------------------------\n";
-            
-            // Añade la ubicación (si está disponible)
-            message += locationMessage;
+            // Si no hay ítems, el total es 0 y el botón se deshabilita
+            if (totalItems === 0) {
+                document.getElementById('cart-total-price').textContent = "0.00";
+            }
+        }
+        
+        // --- Lógica de Envío ---
 
+        function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
+            
+            const isDelivery = document.getElementById('delivery-checkbox').checked;
+            let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
+            let deliveryCost = 0;
+            
+            // 1. Ítems del pedido
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.price * item.quantity;
+                message += `*${item.quantity}x* ${item.name} = ${itemSubtotal.toFixed(2)}$\n`;
+            }
+
+            message += "\n----------------------------------\n";
+            
+            // 2. Información de Servicio y Costos
+            if (isDelivery) {
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+                
+                // Si hay distancia (km) significa que se pudo calcular el costo
+                if (distanceKm > 0) {
+                    deliveryCost = Math.max(1.00, distanceKm * 1.00); // 1$ por km, mínimo 1$
+                    deliveryCost = deliveryCost.toFixed(2);
+                    
+                    message += `✅ *SERVICIO:* DELIVERY 🚚\n`;
+                    message += `📍 *DISTANCIA CALCULADA:* ${distanceKm.toFixed(2)} km\n`;
+                    message += `💵 *COSTO DELIVERY:* ${deliveryCost}$ (${distanceKm.toFixed(2)} km * 1$/km)\n`;
+                    message += `\n*SUBTOTAL (Comida):* ${subtotal.toFixed(2)}$\n`;
+                    message += `*TOTAL FINAL:* ${finalTotal.toFixed(2)}$\n`;
+                    message += `🗺️ *UBICACIÓN CLIENTE:* ${mapsUrl}\n`;
+                    
+                } else {
+                    // Si delivery es TRUE pero la geolocalización falló o fue rechazada.
+                    message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
+                    message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación o fue rechazada. El costo de delivery se calculará a la entrega.\n`;
+                    message += `\n*TOTAL A PAGAR (Comida):* ${subtotal.toFixed(2)}$\n`;
+                    
+                }
+            } else {
+                // Retiro en Tienda
+                message += `✅ *SERVICIO:* RETIRO EN TIENDA 🚶\n`;
+                message += `💰 *TOTAL A PAGAR:* ${subtotal.toFixed(2)}$\n`;
+            }
+            
+            message += "----------------------------------\n";
             message += "\nPor favor, indique su nombre y dirección exacta.";
 
 
-            // 2. ENVÍA POR WHATSAPP
+            // 3. ENVÍA POR WHATSAPP
             const encodedMessage = encodeURIComponent(message);
             const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
 
             window.open(whatsappUrl, '_blank');
             
-            // 3. VACÍA Y REFRESCAL CARRITO
+            // 4. VACÍA Y REFRESCAL CARRITO
             cart = {};
             updateCartDisplay();
         }
@@ -659,18 +741,23 @@
         function checkAndSendOrder() {
             const isDelivery = document.getElementById('delivery-checkbox').checked;
             const checkoutBtn = document.getElementById('checkout-btn');
+            
+            let subtotal = 0;
+            for (const id in cart) {
+                subtotal += cart[id].price * cart[id].quantity;
+            }
 
             if (!isDelivery) {
-                // Si NO es Delivery, enviamos el pedido de inmediato sin ubicación.
-                sendOrder();
+                // Si NO es Delivery, enviamos el pedido de inmediato sin ubicación ni costos extra.
+                sendOrder(subtotal, subtotal, 0, 0, 0); // distanceKm=0, lat=0, lon=0
                 return;
             }
             
-            // Si es Delivery, intentamos obtener la ubicación
+            // --- Si es Delivery, intentamos obtener la ubicación y calcular ---
             
             // Deshabilitamos el botón y mostramos mensaje de espera
             checkoutBtn.disabled = true;
-            checkoutBtn.textContent = 'Obteniendo ubicación...';
+            checkoutBtn.textContent = 'Calculando envío...';
             document.getElementById('loading-location').style.display = 'block';
 
 
@@ -678,35 +765,44 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         // Éxito: Ubicación obtenida
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
+                        const clientLat = position.coords.latitude;
+                        const clientLon = position.coords.longitude;
                         
-                        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-                        const locationMsg = `\n📍 *UBICACIÓN ACTUAL:* \n${mapsUrl}\n`;
+                        // 1. Calcular Distancia
+                        const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
                         
+                        // 2. Calcular Costo de Delivery
+                        const deliveryCost = Math.max(1.00, distanceKm * 1.00); // 1$ min, 1$ por km
+                        
+                        // 3. Calcular Total Final
+                        const finalTotal = subtotal + deliveryCost;
+
                         checkoutBtn.textContent = 'Hacer Pedido';
                         document.getElementById('loading-location').style.display = 'none';
 
-                        sendOrder(locationMsg);
+                        // 4. Enviar pedido con toda la información calculada
+                        sendOrder(subtotal, finalTotal, distanceKm, clientLat, clientLon);
                     },
                     (error) => {
                         // Error: Usuario no dio permiso o hay error
                         console.error('Error de geolocalización:', error);
                         
-                        const locationMsg = "\n⚠️ *UBICACIÓN NO COMPARTIDA.* \n(El cliente no dio permiso o hubo un error.)\n";
-                        
-                        checkoutBtn.textContent = 'Hacer Pedido (Sin Ubic.)';
+                        checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
                         document.getElementById('loading-location').style.display = 'none';
 
-                        sendOrder(locationMsg);
+                        // 5. Enviar pedido con total solo de comida (costo de envío pendiente)
+                        sendOrder(subtotal, subtotal, 0, 0, 0);
                     }
                 );
             } else {
                 // Navegador no soporta Geolocalización
-                const locationMsg = "\n❌ *GEOLOCALIZACIÓN NO SOPORTADA.* \n";
-                checkoutBtn.textContent = 'Hacer Pedido (Sin Ubic.)';
+                console.error('Geolocalización no soportada.');
+                
+                checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
                 document.getElementById('loading-location').style.display = 'none';
-                sendOrder(locationMsg);
+                
+                // 5. Enviar pedido con total solo de comida (costo de envío pendiente)
+                sendOrder(subtotal, subtotal, 0, 0, 0);
             }
         }
 
