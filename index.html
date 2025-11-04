@@ -12,8 +12,8 @@
             --color-wainer-dark: #333;
             --color-wainer-light: #FFF;
             --color-whatsapp-green: #25D366;
-            --color-tag-bg: #C00000; /* Fondo para etiquetas */
-            --color-tag-text: #FFD700; /* Texto para etiquetas */
+            --color-tag-bg: #C00000;
+            --color-tag-text: #FFD700;
         }
 
         body {
@@ -107,7 +107,6 @@
             font-size: 1.1em;
         }
 
-        /* Estilos de la etiqueta TOP VENTA */
         .top-venta-tag {
             background-color: var(--color-tag-bg);
             color: var(--color-tag-text);
@@ -119,7 +118,6 @@
             white-space: nowrap;
         }
 
-        /* Estilos del Carrito */
         .item-controls {
             display: flex;
             align-items: center;
@@ -208,8 +206,6 @@
             border-radius: 8px;
             margin-bottom: 20px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
             flex-direction: column;
             align-items: flex-start;
         }
@@ -260,7 +256,7 @@
         
         <div class="promo-tag">¡Miércoles de 2x1 en Hamburguesas Whopper!</div>
         
-        <p class="schedule">🕔 **HORARIO DE ATENCIÓN:** Lunes a Domingo de 5:00 PM a 11:00 PM</p>
+        <p class="schedule">🕔 **HORARIO DE ATENCIÓN:** Miércoles a Domingo de 6:00 PM a 12:00 AM</p>
     </header>
 
     <main class="menu-container">
@@ -700,7 +696,14 @@
                 quantityElement.textContent = cart[itemId] ? cart[itemId].quantity : 0;
             });
 
-            // Lógica de deshabilitación por Ítems o por Límite de tiempo
+            if (totalItems > 0) {
+                checkoutBtn.disabled = false;
+            } else {
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = `Hacer Pedido por WhatsApp`;
+            }
+            
+            // Lógica de deshabilitación por Límite de tiempo
             const lastOrderTime = localStorage.getItem('lastOrderTime');
             const now = Date.now();
             
@@ -709,15 +712,8 @@
                 checkoutBtn.disabled = true;
                 const remainingSeconds = Math.ceil((COOLDOWN_SECONDS * 1000 - (now - lastOrderTime)) / 1000);
                 checkoutBtn.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
-            } else if (totalItems > 0) {
-                // Hay ítems y no hay límite de tiempo
-                checkoutBtn.disabled = false;
-            } else {
-                // No hay ítems
-                checkoutBtn.disabled = true;
-                checkoutBtn.textContent = `Hacer Pedido por WhatsApp`;
             }
-            
+
             // Lógica del Delivery y display de totales
             if (isDelivery) {
                 document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
