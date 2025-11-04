@@ -141,7 +141,7 @@
         }
         
         .cart-float button {
-            background-color: var(--color-wainer-dark); /* Color de fondo cuando está activo */
+            background-color: var(--color-wainer-dark);
             color: var(--color-wainer-gold);
             border: none;
             padding: 10px 20px;
@@ -152,7 +152,6 @@
             transition: background-color 0.2s;
         }
         
-        /* ESTILO PARA EL BOTÓN DESHABILITADO (Gris) - SOLUCIÓN AL PROBLEMA DE COLOR */
         .cart-float button:disabled {
             background-color: #666 !important;
             color: #BBB !important;
@@ -591,6 +590,7 @@
 
     <script>
         const WHATSAPP_NUMBER = '584120719505';
+        const COOLDOWN_SECONDS = 180; // Límite de 3 minutos
         let cart = {}; 
         
         // *** COORDENADAS DE TU NEGOCIO (CONFIGURADAS) ***
@@ -613,7 +613,7 @@
                 Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const distance = R * c; // Distancia en km
+            const distance = R * c; 
             
             return distance;
         }
@@ -664,9 +664,20 @@
                 quantityElement.textContent = cart[itemId] ? cart[itemId].quantity : 0;
             });
 
-            if (totalItems > 0) {
+            // Lógica de deshabilitación por Ítems o por Límite de tiempo
+            const lastOrderTime = localStorage.getItem('lastOrderTime');
+            const now = Date.now();
+            
+            if (lastOrderTime && (now - lastOrderTime) < (COOLDOWN_SECONDS * 1000)) {
+                // ** Límite de tiempo activo **
+                checkoutBtn.disabled = true;
+                const remainingSeconds = Math.ceil((COOLDOWN_SECONDS * 1000 - (now - lastOrderTime)) / 1000);
+                checkoutBtn.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
+            } else if (totalItems > 0) {
+                // Hay ítems y no hay límite de tiempo
                 checkoutBtn.disabled = false;
             } else {
+                // No hay ítems
                 checkoutBtn.disabled = true;
                 checkoutBtn.textContent = `Hacer Pedido por WhatsApp`;
             }
@@ -675,15 +686,17 @@
             if (isDelivery) {
                 document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
                 deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación. (1$ por km, mínimo 1$)";
-                checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
                 
-                if (totalItems === 0) {
-                     deliveryDetails.textContent = "Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)";
+                if (totalItems > 0 && !checkoutBtn.disabled) {
+                     checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
                 }
             } else {
                 document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
                 deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
-                checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Total: ${subtotal.toFixed(2)}$`;
+                
+                if (totalItems > 0 && !checkoutBtn.disabled) {
+                    checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Total: ${subtotal.toFixed(2)}$`;
+                }
             }
 
             if (totalItems === 0) {
@@ -714,7 +727,7 @@
                     
                     message += `✅ *SERVICIO:* DELIVERY 🚚\n`;
                     message += `📍 *DISTANCIA CALCULADA:* ${distanceKm.toFixed(2)} km\n`;
-                    message += `💵 *COSTO DELIVERY:* ${deliveryCost.toFixed(2)}$ (${distanceKm.toFixed(2)} km * 1$/km)\n`;
+                    message += `💵 *COSTO DELIVERY:* ${deliveryCost.toFixed(2)}$ (1$/km, mínimo 1$)\n`;
                     message += `\n*SUBTOTAL (Comida):* ${subtotal.toFixed(2)}$\n`;
                     message += `*TOTAL FINAL:* ${finalTotal.toFixed(2)}$\n`;
                     message += `🗺️ *UBICACIÓN CLIENTE:* ${mapsUrl}\n`;
@@ -737,6 +750,9 @@
 
             window.open(whatsappUrl, '_blank');
             
+            // ESTABLECE EL TIEMPO DEL ÚLTIMO PEDIDO
+            localStorage.setItem('lastOrderTime', Date.now());
+
             // VACIAR Y REFRESCAR CARRITO
             cart = {};
             updateCartDisplay();
@@ -745,6 +761,13 @@
         function checkAndSendOrder() {
             const isDelivery = document.getElementById('delivery-checkbox').checked;
             const checkoutBtn = document.getElementById('checkout-btn');
+            
+            // 1. VERIFICACIÓN DEL LÍMITE DE TIEMPO
+            const lastOrderTime = localStorage.getItem('lastOrderTime');
+            const now = Date.now();
+            if (lastOrderTime && (now - lastOrderTime) < (COOLDOWN_SECONDS * 1000)) {
+                return;
+            }
             
             let subtotal = 0;
             for (const id in cart) {
@@ -771,7 +794,6 @@
                         
                         const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
                         
-                        // Costo: 1$ por km, mínimo 1$
                         const deliveryCost = Math.max(1.00, distanceKm * 1.00); 
                         
                         const finalTotal = subtotal + deliveryCost;
@@ -802,7 +824,11 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', updateCartDisplay);
+        document.addEventListener('DOMContentLoaded', () => {
+             updateCartDisplay();
+             // Actualiza el contador de espera cada segundo (para el cooldown)
+             setInterval(updateCartDisplay, 1000);
+        });
     </script>
 </body>
 </html>
