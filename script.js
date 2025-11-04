@@ -25,10 +25,11 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 // --- Función principal para cargar el menú ---
 async function loadMenuData() {
     try {
-        // Fetch de datos desde el archivo JSON
-        const response = await fetch('menu_data.json');
+        // Fetch de datos desde el archivo JSON (VERIFICA ESTE NOMBRE)
+        const response = await fetch('menu_data.json'); 
         if (!response.ok) {
-            throw new Error('No se pudo cargar menu_data.json');
+            // Este error ocurre si no encuentra el archivo o si tiene un error de sintaxis JSON.
+            throw new Error(`Error HTTP: ${response.status} - No se pudo cargar menu_data.json`);
         }
         const data = await response.json();
         MENU_DATA = data;
@@ -89,7 +90,6 @@ async function loadMenuData() {
 // --- Lógica de Pedir de Nuevo ---
 
 function loadLastOrder() {
-    // 1. Obtener el último pedido guardado
     const lastOrderString = localStorage.getItem('lastOrderCart');
     if (!lastOrderString) return;
 
@@ -98,16 +98,14 @@ function loadLastOrder() {
         let newCart = {};
         let successCount = 0;
 
-        // 2. Recorrer el pedido guardado y reconstruir el carrito
         for (const itemId in lastOrder) {
             const item = lastOrder[itemId];
             
-            // 3. Verificar si el ítem todavía existe en el menú (para evitar errores de productos descontinuados)
             if (ALL_ITEMS_MAP[itemId]) {
                  newCart[itemId] = {
                     id: itemId,
                     name: item.name,
-                    price: ALL_ITEMS_MAP[itemId].price, // Usar el precio actual del JSON
+                    price: ALL_ITEMS_MAP[itemId].price, 
                     category: item.category,
                     quantity: item.quantity
                 };
@@ -116,7 +114,7 @@ function loadLastOrder() {
         }
 
         if (successCount > 0) {
-            cart = newCart; // Reemplazar el carrito actual con el último pedido
+            cart = newCart; 
             alert(`✅ Último pedido (${successCount} ítems) cargado al carrito.`);
             updateCartDisplay();
         } else {
@@ -170,7 +168,7 @@ function updateCartDisplay() {
     const isDelivery = document.getElementById('delivery-checkbox').checked;
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
-    const reorderContainer = document.getElementById('reorder-container'); // Nuevo
+    const reorderContainer = document.getElementById('reorder-container');
 
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
@@ -196,7 +194,7 @@ function updateCartDisplay() {
         checkoutBtn.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
     }
 
-    // Lógica del Botón Reordenar (visible solo si el carrito está vacío)
+    // Lógica del Botón Reordenar
     const lastOrderCart = localStorage.getItem('lastOrderCart');
     if (lastOrderCart && totalItems === 0) {
         reorderContainer.innerHTML = `<button onclick="loadLastOrder()" style="background-color: #FFD700; color: #333; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">🔁 Pedir Mi Último Pedido</button>`;
@@ -233,7 +231,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     const isDelivery = document.getElementById('delivery-checkbox').checked;
     let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
     
-    // 1. Preparar mensaje
     for (const id in cart) {
         const item = cart[id];
         const itemSubtotal = item.price * item.quantity;
@@ -242,7 +239,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
-    // 2. Información de Delivery
     if (isDelivery) {
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
@@ -272,14 +268,12 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${MENU_DATA.info.whatsapp_number}?text=${encodedMessage}`;
 
-    // 3. Abrir WhatsApp y Guardar la Data
     window.open(whatsappUrl, '_blank');
     
-    // *** GUARDAR EL PEDIDO EN LOCALSTORAGE ANTES DE VACIAR ***
+    // GUARDAR PEDIDO Y COOLDOWN
     localStorage.setItem('lastOrderCart', JSON.stringify(cart));
     localStorage.setItem('lastOrderTime', Date.now());
 
-    // 4. VACIAR Y REFRESCAR
     cart = {};
     updateCartDisplay();
 }
@@ -325,7 +319,6 @@ function checkAndSendOrder() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                // Éxito: Ubicación obtenida
                 const clientLat = position.coords.latitude;
                 const clientLon = position.coords.longitude;
                 
@@ -344,7 +337,6 @@ function checkAndSendOrder() {
                 sendOrder(subtotal, finalTotal, distanceKm, clientLat, clientLon);
             },
             (error) => {
-                // Error: Usuario no dio permiso o hay error
                 console.error('Error de geolocalización:', error);
                 
                 checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
@@ -354,7 +346,6 @@ function checkAndSendOrder() {
             }
         );
     } else {
-        // Navegador no soporta Geolocalización
         console.error('Geolocalización no soportada.');
         
         checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
