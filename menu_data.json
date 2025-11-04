@@ -1,82 +1,61 @@
-{
-    "info": {
-        "whatsapp_number": "584120719505",
-        "cooldown_seconds": 60,
-        "origin_lat": 10.6608820,
-        "origin_lon": -71.5990720,
-        "schedule": "Miércoles a Domingo de 6:00 PM a 12:00 AM",
-        "promo": "¡Miércoles de 2x1 en Hamburguesas Whopper!"
+[
+    {
+        "category": "🥖 Panes: ¡El Clásico Rápido! 💨",
+        "slogan": "Ideales para una merienda rápida o un desayuno express.",
+        "items": [
+            {"name": "Salchicha", "price": 1.00},
+            {"name": "Huevo", "price": 1.00},
+            {"name": "Cebú", "price": 1.00},
+            {"name": "Salchiqueso", "price": 1.50}
+        ]
     },
-    "categories": [
-        {
-            "name": "🥖 Panes: ¡El Clásico Rápido!",
-            "slogan": "Ideales para una merienda rápida o un desayuno express.",
-            "items": [
-                {"id": "pan-salchicha", "name": "Pan Salchicha", "price": 1.00, "top_venta": false},
-                {"id": "pan-huevo", "name": "Pan Huevo", "price": 1.00, "top_venta": false},
-                {"id": "pan-cebu", "name": "Pan Cebú", "price": 1.00, "top_venta": false},
-                {"id": "pan-salchiqueso", "name": "Pan Salchiqueso", "price": 1.50, "top_venta": true}
-            ]
-        },
-        {
-            "name": "🌾 Pan Granjero: El Gigante de la Ciudad",
-            "slogan": "Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.",
-            "items": [
-                {"id": "gran-carne", "name": "Granjero Carne y Cebú", "price": 3.50, "top_venta": true},
-                {"id": "gran-pollo", "name": "Granjero Pollo y Cebú", "price": 3.50, "top_venta": false},
-                {"id": "gran-lomonegro", "name": "Granjero Lomo Negro y Cebú", "price": 3.50, "top_venta": false},
-                {"id": "gran-lomito", "name": "Granjero Lomito y Cebú", "price": 3.50, "top_venta": false},
-                {"id": "gran-pernil", "name": "Granjero Pernil y Cebú", "price": 3.50, "top_venta": false},
-                {"id": "gran-chuleta", "name": "Granjero Chuleta y Cebú", "price": 3.50, "top_venta": false}
-            ]
-        },
-        {
-            "name": "🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano!",
-            "slogan": "La tradición que enamora. Rellenos que te harán sentir en casa.",
-            "items": [
-                {"id": "arepa-tradicional", "name": "Arepa Tradicional (2x)", "price": 1.50, "top_venta": false},
-                {"id": "arepa-cebu", "name": "Arepa Cebú", "price": 1.00, "top_venta": false},
-                {"id": "arepa-jamon-queso", "name": "Arepa Jamón y Queso", "price": 1.00, "top_venta": false},
-                {"id": "arepa-carne", "name": "Arepa Carne", "price": 3.50, "top_venta": false},
-                {"id": "arepa-pollo", "name": "Arepa Pollo", "price": 3.50, "top_venta": false},
-                {"id": "arepa-lomonegro", "name": "Arepa Lomo Negro", "price": 3.50, "top_venta": false},
-                {"id": "arepa-lomito", "name": "Arepa Lomito", "price": 3.50, "top_venta": false},
-                {"id": "arepa-pernil", "name": "Arepa Pernil", "price": 3.50, "top_venta": false},
-                {"id": "arepa-chuleta", "name": "Arepa Chuleta", "price": 3.50, "top_venta": false},
-                {"id": "arepa-pollocrispy", "name": "Arepa Pollo Crispy", "price": 3.50, "top_venta": false}
-            ]
-        },
-        {
-            "name": "🍟 Hamburguesas: ¡Poder Wainer!",
-            "slogan": "Elige la experiencia Wainer que se adapte a tu hambre. Calidad inigualable.",
-            "items": [
-                {"id": "hamb-mini", "name": "Mini de Carne", "price": 1.00, "top_venta": false},
-                {"id": "hamb-pollo", "name": "Hamburguesa Pollo", "price": 1.50, "top_venta": false},
-                {"id": "hamb-chuleta", "name": "Hamburguesa Chuleta", "price": 1.50, "top_venta": false},
-                {"id": "hamb-lomito", "name": "Hamburguesa Lomito", "price": 1.50, "top_venta": false},
-                {"id": "hamb-whopper", "name": "Whopper", "price": 3.50, "top_venta": false},
-                {"id": "hamb-combo", "name": "Whopper y Papas (Combo)", "price": 5.00, "top_venta": true},
-                {"id": "hamb-mixta", "name": "Whopper Mixta", "price": 6.00, "top_venta": false},
-                {"id": "hamb-full", "name": "Whopper Extra Full", "price": 8.00, "top_venta": false}
-            ]
-        },
-        {
-            "name": "🌿 Patacones: Crujientes y Rellenos",
-            "slogan": "La base perfecta para los mejores rellenos. Nuestro favorito.",
-            "items": [
-                {"id": "pata-normal", "name": "Patacón Normal", "price": 3.50, "top_venta": false},
-                {"id": "pata-papa", "name": "Patacón y Papa", "price": 5.00, "top_venta": false},
-                {"id": "pata-especial", "name": "Patacón Especial", "price": 6.00, "top_venta": true},
-                {"id": "pata-full", "name": "Patacón Extra Full", "price": 9.00, "top_venta": false}
-            ]
-        },
-        {
-            "name": "➕ Complementos",
-            "slogan": "Añade un extra de sabor a tu pedido.",
-            "items": [
-                {"id": "comp-yoyos", "name": "Yoyos", "price": 3.50, "top_venta": false},
-                {"id": "comp-papas", "name": "Servicio de Papas", "price": 2.50, "top_venta": false}
-            ]
-        }
-    ]
-}
+    {
+        "category": "🍟 Hamburguesas: ¡Poder Wainer! 👑",
+        "slogan": "Elige la experiencia Wainer que se adapte a tu hambre. Calidad inigualable.",
+        "items": [
+            {
+                "name": "Whopper", 
+                "price": 3.50,
+                "options": [
+                    {"label": "Con Todo (Salsas, Veg.)", "value": "Con Todo", "checked": true},
+                    {"label": "Poca Salsa", "value": "Poca Salsa"},
+                    {"label": "Sin Salsa", "value": "Sin Salsa"},
+                    {"label": "Sin Cebolla", "value": "Sin Cebolla"},
+                    {"label": "Sin Tomate", "value": "Sin Tomate"}
+                ]
+            },
+            {"name": "Mini de Carne", "price": 1.00},
+            {"name": "Pollo (Hamburguesa)", "price": 1.50},
+            {"name": "Whopper y Papas (Combo)", "price": 5.00}
+        ]
+    },
+    {
+        "category": "🌾 Pan Granjero: El Gigante de la Ciudad 💪",
+        "slogan": "Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.",
+        "items": [
+            {"name": "Carne y Cebú", "price": 3.50},
+            {"name": "Pollo y Cebú", "price": 3.50},
+            {"name": "Lomo Negro y Cebú", "price": 3.50},
+            {"name": "Chuleta y Cebú", "price": 3.50}
+        ]
+    },
+    {
+        "category": "🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano! 🇻🇪",
+        "slogan": "La tradición que enamora. Rellenos que te harán sentir en casa.",
+        "items": [
+            {"name": "Tradicional (2x)", "price": 1.50},
+            {"name": "Cebú", "price": 1.00},
+            {"name": "Jamón y Queso", "price": 1.00},
+            {"name": "Carne", "price": 3.50},
+            {"name": "Pollo", "price": 3.50}
+        ]
+    },
+    {
+        "category": "➕ Complementos",
+        "slogan": "Añade un extra de sabor a tu pedido.",
+        "items": [
+            {"name": "Yoyos", "price": 3.50},
+            {"name": "Servicio de Papas", "price": 2.50}
+        ]
+    }
+]
