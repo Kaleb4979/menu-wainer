@@ -1,13 +1,13 @@
 // ====================================
 // CONFIGURACIÓN
 // ====================================
-const WHATSAPP_NUMBER = "584120719505"; // Reemplaza con tu número de WhatsApp real (con código de país)
+const WHATSAPP_NUMBER = "58412XXXXXXX"; // <-- REEMPLAZA CON TU NÚMERO
 const DELIVERY_RATE_PER_KM = 1.00; // Costo por kilómetro
 const MINIMUM_DELIVERY_FEE = 1.00; // Tarifa mínima de delivery si se activa
 
 // Ubicación de la tienda (ejemplo en Maracaibo, Venezuela)
-const SHOP_LAT = 10.6300; // Latitud de tu negocio
-const SHOP_LON = -71.7450; // Longitud de tu negocio
+const SHOP_LAT = 10.6300; // <-- REEMPLAZA CON TU LATITUD
+const SHOP_LON = -71.7450; // <-- REEMPLAZA CON TU LONGITUD
 
 // ====================================
 // LÓGICA DEL CARRITO Y PEDIDO
@@ -145,9 +145,7 @@ function sendWhatsAppOrder() {
 
     // Adjuntar la ubicación GPS para que WhatsApp la reconozca como un mapa
     if (userLocation && deliveryCheckbox.checked) {
-        // La URL de Google Maps para un punto (lat, lon)
-        const mapLink = `http://maps.google.com/?q=${userLocation.latitude},${userLocation.longitude}`;
-        // Se añade como un texto separado para que WhatsApp lo convierta en un pin
+        const mapLink = `http://maps.google.com/?q=$${userLocation.latitude},${userLocation.longitude}`;
         whatsappLink += encodeURIComponent(`\n\nMi Ubicación GPS para el Delivery:\n${mapLink}`); 
     }
 
@@ -162,7 +160,6 @@ async function fetchMenuData() {
     try {
         const response = await fetch('menu_data.json');
         if (!response.ok) {
-            // Este es el error más común: archivo no encontrado (404) o CORS (si lo pruebas localmente)
             throw new Error(`Error ${response.status} al cargar menu_data.json. Asegúrate que el archivo exista.`);
         }
         const menuData = await response.json();
@@ -282,10 +279,9 @@ document.getElementById('delivery-checkbox').addEventListener('change', (event) 
 });
 
 window.onload = function() {
-    fetchMenuData(); // Llama a la carga dinámica del menú
+    fetchMenuData(); // Carga y renderiza el menú
     updateCartDisplay();
 
     document.getElementById('promo-container').textContent = '¡2x1 en Arepas Tradicionales!';
     document.getElementById('schedule-container').textContent = 'Abierto de 5:00 PM a 1:00 AM';
 };
-
