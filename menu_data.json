@@ -1,7 +1,7 @@
 {
     "info": {
         "whatsapp_number": "584120719505",
-        "cooldown_seconds": 180,
+        "cooldown_seconds": 60,
         "origin_lat": 10.6608820,
         "origin_lon": -71.5990720,
         "schedule": "Miércoles a Domingo de 6:00 PM a 12:00 AM",
@@ -35,10 +35,15 @@
             "slogan": "La tradición que enamora. Rellenos que te harán sentir en casa.",
             "items": [
                 {"id": "arepa-tradicional", "name": "Arepa Tradicional (2x)", "price": 1.50, "top_venta": false},
+                {"id": "arepa-cebu", "name": "Arepa Cebú", "price": 1.00, "top_venta": false},
+                {"id": "arepa-jamon-queso", "name": "Arepa Jamón y Queso", "price": 1.00, "top_venta": false},
                 {"id": "arepa-carne", "name": "Arepa Carne", "price": 3.50, "top_venta": false},
                 {"id": "arepa-pollo", "name": "Arepa Pollo", "price": 3.50, "top_venta": false},
+                {"id": "arepa-lomonegro", "name": "Arepa Lomo Negro", "price": 3.50, "top_venta": false},
                 {"id": "arepa-lomito", "name": "Arepa Lomito", "price": 3.50, "top_venta": false},
-                {"id": "arepa-chuleta", "name": "Arepa Chuleta", "price": 3.50, "top_venta": false}
+                {"id": "arepa-pernil", "name": "Arepa Pernil", "price": 3.50, "top_venta": false},
+                {"id": "arepa-chuleta", "name": "Arepa Chuleta", "price": 3.50, "top_venta": false},
+                {"id": "arepa-pollocrispy", "name": "Arepa Pollo Crispy", "price": 3.50, "top_venta": false}
             ]
         },
         {
@@ -47,8 +52,11 @@
             "items": [
                 {"id": "hamb-mini", "name": "Mini de Carne", "price": 1.00, "top_venta": false},
                 {"id": "hamb-pollo", "name": "Hamburguesa Pollo", "price": 1.50, "top_venta": false},
+                {"id": "hamb-chuleta", "name": "Hamburguesa Chuleta", "price": 1.50, "top_venta": false},
+                {"id": "hamb-lomito", "name": "Hamburguesa Lomito", "price": 1.50, "top_venta": false},
                 {"id": "hamb-whopper", "name": "Whopper", "price": 3.50, "top_venta": false},
                 {"id": "hamb-combo", "name": "Whopper y Papas (Combo)", "price": 5.00, "top_venta": true},
+                {"id": "hamb-mixta", "name": "Whopper Mixta", "price": 6.00, "top_venta": false},
                 {"id": "hamb-full", "name": "Whopper Extra Full", "price": 8.00, "top_venta": false}
             ]
         },
