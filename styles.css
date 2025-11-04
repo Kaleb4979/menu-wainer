@@ -1,241 +1,115 @@
-:root {
-    --color-wainer-red: #C00000;
-    --color-wainer-gold: #FFD700;
-    --color-wainer-dark: #333;
-    --color-wainer-light: #FFF;
-    --color-whatsapp-green: #25D366;
-    --color-tag-bg: #C00000;
-    --color-tag-text: #FFD700;
-}
+/* ==================================== */
+/* --- NUEVOS ESTILOS DE PERSONALIZACIÓN --- */
+/* ==================================== */
 
-body {
-    font-family: 'Arial', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: var(--color-wainer-dark);
-    color: var(--color-wainer-light);
-    line-height: 1.6;
-    padding-bottom: 80px;
-}
-
-.hero {
-    background-color: var(--color-wainer-red);
-    color: var(--color-wainer-gold);
-    text-align: center;
-    padding: 20px 0;
+/* Estilo para el contenedor del ítem complejo (el que tiene opciones detalladas) */
+.menu-item-complex {
+    background-color: #303030; /* Un gris oscuro para destacar el ítem personalizable */
+    padding: 15px;
     margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-.logo {
-    max-width: 180px;
-    height: auto;
-    display: block;
-    margin: 0 auto 10px;
-    border-radius: 5px;
-}
-
-.hero h1 {
-    font-size: 1.5em;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.promo-tag {
-    color: var(--color-wainer-light);
-    background-color: var(--color-wainer-dark);
-    padding: 5px 15px;
-    margin-top: 10px;
-    font-size: 1.1em;
-    font-weight: bold;
-    display: inline-block;
-    border-radius: 5px;
-}
-
-.schedule {
-    color: #DDD;
-    font-size: 0.9em;
-    margin-top: 10px;
-    margin-bottom: 0;
-    padding: 0 10px;
-}
-
-.menu-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-
-.menu-category {
-    background-color: #222;
-    padding: 20px;
-    margin-bottom: 30px;
-    border-radius: 10px;
-    border-left: 5px solid var(--color-wainer-gold);
-}
-
-.menu-category h2 {
-    color: var(--color-wainer-gold);
-    border-bottom: 2px solid var(--color-wainer-red);
-    padding-bottom: 5px;
-    margin-top: 0;
-    font-size: 1.8em;
-}
-
-.slogan {
-    font-style: italic;
-    color: #AAA;
-    margin-bottom: 15px;
-    font-size: 0.9em;
-}
-
-.menu-item {
+.item-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px dashed #555;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.item-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--color-wainer-light);
+}
+
+.opciones-titulo {
+    color: var(--color-wainer-gold);
+    font-size: 1em;
+    margin: 10px 0 8px 0;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.opciones-grupo {
+    display: flex;
+    flex-direction: column; /* Apila las opciones para que sean fáciles de tocar en el móvil */
+    gap: 5px;
+}
+
+.opciones-grupo label {
+    font-size: 0.9em;
+    color: #DDD;
+    cursor: pointer;
+}
+
+.opciones-grupo input[type="checkbox"] {
+    margin-right: 5px;
+    accent-color: var(--color-wainer-gold);
+}
+
+/* Caja de texto para instrucciones especiales */
+.instrucciones-box {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #444;
+    color: var(--color-wainer-light);
+    resize: vertical;
+    font-size: 0.9em;
+}
+
+/* Botón de Añadir ancho completo para ítems complejos */
+.add-to-cart-btn.full-width {
+    display: block;
+    width: 100%;
+    margin: 15px 0 0 0;
+    padding: 10px;
+    background-color: var(--color-wainer-red);
+    color: var(--color-wainer-light);
+    font-size: 1.1em;
+}
+
+/* Ajuste al grid para los items simples que también tendrán notas */
+.menu-item {
+    /* Reemplazamos el 'display: flex' original para mejor control de la cuadrícula */
+    display: grid;
+    grid-template-columns: 1fr auto auto; /* Nombre | Precio | Botones */
+    align-items: center;
+    gap: 10px;
     padding: 10px 0;
     border-bottom: 1px dotted #555;
     font-size: 1.1em;
 }
 
-.top-venta-tag {
-    background-color: var(--color-tag-bg);
-    color: var(--color-tag-text);
-    font-size: 0.7em;
-    font-weight: bold;
-    padding: 3px 6px;
-    border-radius: 4px;
-    margin-left: 8px;
-    white-space: nowrap;
+/* Aseguramos que la caja de notas ocupe todo el ancho bajo el ítem simple */
+.menu-item .instrucciones-box {
+    grid-column: 1 / 4; /* Ocupa las 3 columnas */
+    margin-top: 5px;
+    margin-bottom: 0;
 }
 
-.item-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+/* Ocultar el control de cantidad de los items de lista simple para reemplazarlos con el botón de añadir */
+.menu-item .quantity-control {
+    display: none; 
 }
-.price {
-    font-weight: bold;
-    color: var(--color-wainer-gold);
-    min-width: 40px;
-    text-align: right;
-}
-.quantity-control {
-    display: flex;
-    align-items: center;
-    background-color: #444;
-    border-radius: 5px;
-    overflow: hidden;
-}
-.quantity-btn {
+/* Estilo del botón de añadir para ítems de lista simple */
+.add-to-cart-btn {
     background-color: var(--color-wainer-red);
     color: var(--color-wainer-light);
     border: none;
     padding: 5px 10px;
+    border-radius: 4px;
     cursor: pointer;
+    font-weight: bold;
     font-size: 1em;
-    font-weight: bold;
     transition: background-color 0.2s;
-}
-.item-quantity {
-    padding: 5px 10px;
-    color: var(--color-wainer-light);
-    font-weight: bold;
-    min-width: 15px;
+    min-width: 35px; /* Para que el botón '+' sea consistente */
     text-align: center;
 }
-
-/* CARRITO FLOTANTE */
-.cart-float {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: var(--color-whatsapp-green);
-    color: white;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.cart-float button {
-    background-color: var(--color-wainer-dark);
-    color: var(--color-wainer-gold);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1.1em;
-    transition: background-color 0.2s;
-}
-
-.cart-float button:disabled {
-    background-color: #666 !important;
-    color: #BBB !important;
-    cursor: not-allowed;
-}
-
-.cart-total {
-    font-size: 1.4em;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    text-align: left;
-}
-
-/* Sección de Opciones de Pedido (Delivery) */
-.order-options {
-    background-color: #444;
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.delivery-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    margin-bottom: 10px;
-}
-
-.order-options label {
-    display: flex;
-    align-items: center;
-    font-size: 1.1em;
-    font-weight: bold;
-}
-
-.order-options input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-left: 10px;
-    cursor: pointer;
-    accent-color: var(--color-wainer-gold);
-}
-
-.delivery-info {
-    font-size: 0.9em;
-    color: #ccc;
-    margin-left: 30px;
-}
-
-.loading-message {
-    color: var(--color-wainer-gold);
-    font-weight: bold;
-    margin-top: 10px;
-    text-align: center;
-}
-
-footer { display: none; }
