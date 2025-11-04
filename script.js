@@ -86,6 +86,50 @@ async function loadMenuData() {
 }
 
 
+// --- Lógica de Pedir de Nuevo ---
+
+function loadLastOrder() {
+    // 1. Obtener el último pedido guardado
+    const lastOrderString = localStorage.getItem('lastOrderCart');
+    if (!lastOrderString) return;
+
+    try {
+        const lastOrder = JSON.parse(lastOrderString);
+        let newCart = {};
+        let successCount = 0;
+
+        // 2. Recorrer el pedido guardado y reconstruir el carrito
+        for (const itemId in lastOrder) {
+            const item = lastOrder[itemId];
+            
+            // 3. Verificar si el ítem todavía existe en el menú (para evitar errores de productos descontinuados)
+            if (ALL_ITEMS_MAP[itemId]) {
+                 newCart[itemId] = {
+                    id: itemId,
+                    name: item.name,
+                    price: ALL_ITEMS_MAP[itemId].price, // Usar el precio actual del JSON
+                    category: item.category,
+                    quantity: item.quantity
+                };
+                successCount++;
+            }
+        }
+
+        if (successCount > 0) {
+            cart = newCart; // Reemplazar el carrito actual con el último pedido
+            alert(`✅ Último pedido (${successCount} ítems) cargado al carrito.`);
+            updateCartDisplay();
+        } else {
+            alert("No se pudo cargar el último pedido. Puede que los productos hayan sido descontinuados.");
+        }
+
+    } catch (e) {
+        console.error("Error al parsear el último pedido:", e);
+        alert("Hubo un error al recuperar el último pedido.");
+    }
+}
+
+
 // --- Funciones de Carrito y Display ---
 function updateCart(itemId, change) {
     const itemData = ALL_ITEMS_MAP[itemId];
@@ -126,6 +170,7 @@ function updateCartDisplay() {
     const isDelivery = document.getElementById('delivery-checkbox').checked;
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
+    const reorderContainer = document.getElementById('reorder-container'); // Nuevo
 
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
@@ -149,6 +194,14 @@ function updateCartDisplay() {
         checkoutBtn.disabled = true;
         const remainingSeconds = Math.ceil((COOLDOWN_SECS * 1000 - (now - lastOrderTime)) / 1000);
         checkoutBtn.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
+    }
+
+    // Lógica del Botón Reordenar (visible solo si el carrito está vacío)
+    const lastOrderCart = localStorage.getItem('lastOrderCart');
+    if (lastOrderCart && totalItems === 0) {
+        reorderContainer.innerHTML = `<button onclick="loadLastOrder()" style="background-color: #FFD700; color: #333; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">🔁 Pedir Mi Último Pedido</button>`;
+    } else {
+        reorderContainer.innerHTML = '';
     }
 
     // Lógica del Delivery y display de totales
@@ -180,6 +233,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     const isDelivery = document.getElementById('delivery-checkbox').checked;
     let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
     
+    // 1. Preparar mensaje
     for (const id in cart) {
         const item = cart[id];
         const itemSubtotal = item.price * item.quantity;
@@ -188,13 +242,14 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
+    // 2. Información de Delivery
     if (isDelivery) {
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
         if (distanceKm > 0) {
             const deliveryCost = finalTotal - subtotal;
             
-            message += `✅ *SERVICIO:* DELIVERY 🏍️\n`;
+            message += `✅ *SERVICIO:* DELIVERY 🚚\n`;
             message += `📍 *DISTANCIA CALCULADA:* ${distanceKm.toFixed(2)} km\n`;
             message += `💵 *COSTO DELIVERY:* ${deliveryCost.toFixed(2)}$ (1$/km, mínimo 1$)\n`;
             message += `\n*SUBTOTAL (Comida):* ${subtotal.toFixed(2)}$\n`;
@@ -202,7 +257,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             message += `🗺️ *UBICACIÓN CLIENTE:* ${mapsUrl}\n`;
             
         } else {
-            message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🏍️\n`;
+            message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
             message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación o fue rechazada. El costo de delivery se calculará a la entrega.\n`;
             message += `\n*TOTAL A PAGAR (Comida):* ${subtotal.toFixed(2)}$\n`;
         }
@@ -217,10 +272,14 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${MENU_DATA.info.whatsapp_number}?text=${encodedMessage}`;
 
+    // 3. Abrir WhatsApp y Guardar la Data
     window.open(whatsappUrl, '_blank');
     
+    // *** GUARDAR EL PEDIDO EN LOCALSTORAGE ANTES DE VACIAR ***
+    localStorage.setItem('lastOrderCart', JSON.stringify(cart));
     localStorage.setItem('lastOrderTime', Date.now());
 
+    // 4. VACIAR Y REFRESCAR
     cart = {};
     updateCartDisplay();
 }
@@ -304,6 +363,5 @@ function checkAndSendOrder() {
         sendOrder(subtotal, subtotal, 0, 0, 0); // Envío pendiente
     }
 }
-
 
 document.addEventListener('DOMContentLoaded', loadMenuData);
