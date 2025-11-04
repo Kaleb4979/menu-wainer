@@ -1,27 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pa que Wainer - Menú y Pedidos</title>
-    
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <header class="hero">
-        <img src="https://imgur.com/CVsm6TV.jpg" alt="Logo Pa que Wainer" class="logo">
-        <h1>LA MEJOR CALIDAD EN COMIDA RÁPIDA</h1>
-        
-        <div id="promo-container" class="promo-tag"></div>
-        <p id="schedule-container" class="schedule"></p>
-    </header>
-
-    <main class="menu-container">
+<main class="menu-container">
         
         <div class="order-options">
             <div class="delivery-toggle">
                 <label for="delivery-checkbox">
-                    🏍️ ¿Desea Delivery?
+                    🚚 ¿Desea Delivery?
                 </label>
                 <input type="checkbox" id="delivery-checkbox" onchange="updateCartDisplay()">
             </div>
@@ -30,6 +12,8 @@
             </div>
         </div>
         
+        <div id="reorder-container" style="text-align: center; margin-bottom: 20px;">
+            </div>
         <div id="loading-location" class="loading-message" style="display:none;">
             Obteniendo tu ubicación para calcular el costo... Por favor, acepta el permiso.
         </div>
@@ -39,22 +23,3 @@
         </div>
 
     </main>
-    
-    <div class="cart-float">
-        <div class="cart-total">
-            🛒 Total: <span id="cart-total-price">0.00</span>$
-        </div>
-        <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
-            Hacer Pedido por WhatsApp
-        </button>
-    </div>
-
-    <footer>
-        <p>© 2025 Pa que Wainer. Todos los derechos reservados.</p>
-    </footer>
-
-    <script src="script.js"></script>
-</body>
-</html>
-
-
