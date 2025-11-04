@@ -10,7 +10,7 @@ const SHOP_LAT = 10.6300; // Latitud de tu negocio
 const SHOP_LON = -71.7450; // Longitud de tu negocio
 
 // ====================================
-// LÓGICA DEL CARRITO
+// LÓGICA DEL CARRITO Y PEDIDO
 // ====================================
 let cart = []; 
 let total = 0;
@@ -19,14 +19,11 @@ let userLocation = null;
 
 /**
  * Agrega un producto al carrito, capturando las opciones de personalización (checkboxes y notas).
- * @param {string} name - Nombre base del producto.
- * @param {number} price - Precio base del producto.
- * @param {HTMLElement} itemElement - El contenedor completo del ítem (div.menu-item-complex).
  */
 function addItemWithDetails(name, price, itemElement) {
     let details = [];
     
-    // 1. Recoger opciones de Checkbox (si existen en el elemento)
+    // 1. Recoger opciones de Checkbox
     const checkboxes = itemElement.querySelectorAll('.opciones-grupo input[type="checkbox"]');
     checkboxes.forEach(cb => {
         if (cb.checked) {
@@ -49,11 +46,10 @@ function addItemWithDetails(name, price, itemElement) {
     // 4. Agregar al carrito
     cart.push({ name: itemName, price: price, basePrice: price }); 
     
-    // 5. Limpiar y resetear UI del ítem después de agregar
+    // 5. Limpiar y resetear UI
     if (notesBox) {
         notesBox.value = '';
         checkboxes.forEach(cb => {
-            // Reiniciar a los valores por defecto (ej: "Con Todo" marcado)
             if (cb.getAttribute('data-default-checked') === 'true') {
                 cb.checked = true;
             } else {
@@ -64,10 +60,9 @@ function addItemWithDetails(name, price, itemElement) {
 
     // 6. Actualizar el display
     updateCartDisplay();
-    alert(`✅ Añadido: ${name}. Total de items: ${cart.length}`);
+    // alert(`✅ Añadido: ${name}. Total de items: ${cart.length}`); // Descomentar para debug
 }
 
-// Función para actualizar el display del carrito y el botón de checkout
 function updateCartDisplay() {
     const totalElement = document.getElementById('cart-total-price');
     const checkoutBtn = document.getElementById('checkout-btn');
@@ -98,7 +93,7 @@ function updateCartDisplay() {
     
     if (cart.length > 0) {
         checkoutBtn.disabled = false;
-        checkoutBtn.textContent = `Hacer Pedido (${cart.length} productos)`;
+        checkoutBtn.textContent = `Hacer Pedido (${cart.length} productos) - ${total.toFixed(2)}$`;
     } else {
         checkoutBtn.disabled = true;
         checkoutBtn.textContent = `Hacer Pedido por WhatsApp`;
@@ -148,11 +143,12 @@ function sendWhatsAppOrder() {
 
     let whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
-    // CORRECCIÓN: Adjuntar la ubicación GPS para que WhatsApp la reconozca como un mapa
+    // Adjuntar la ubicación GPS para que WhatsApp la reconozca como un mapa
     if (userLocation && deliveryCheckbox.checked) {
+        // La URL de Google Maps para un punto (lat, lon)
         const mapLink = `http://maps.google.com/?q=${userLocation.latitude},${userLocation.longitude}`;
-        // Añadir la ubicación como un mensaje separado para que se muestre como pin de mapa
-        whatsappLink += ` ${encodeURIComponent(mapLink)}`; 
+        // Se añade como un texto separado para que WhatsApp lo convierta en un pin
+        whatsappLink += encodeURIComponent(`\n\nMi Ubicación GPS para el Delivery:\n${mapLink}`); 
     }
 
     window.open(whatsappLink, '_blank');
@@ -162,23 +158,22 @@ function sendWhatsAppOrder() {
 // LÓGICA DE CARGA DINÁMICA DEL MENÚ
 // ====================================
 
-// 1. Obtiene los datos del menú del JSON
 async function fetchMenuData() {
     try {
         const response = await fetch('menu_data.json');
         if (!response.ok) {
-            throw new Error('Error al cargar menu_data.json');
+            // Este es el error más común: archivo no encontrado (404) o CORS (si lo pruebas localmente)
+            throw new Error(`Error ${response.status} al cargar menu_data.json. Asegúrate que el archivo exista.`);
         }
         const menuData = await response.json();
         renderMenu(menuData);
     } catch (error) {
         console.error("Error al cargar el menú:", error);
         document.getElementById('menu-content-container').innerHTML = 
-            '<p style="color: red;">Error al cargar el menú. Por favor, asegúrate de que el archivo menu_data.json exista y esté en formato correcto.</p>';
+            '<p style="color: red; text-align: center;">⚠️ Error cargando el menú. Revisa la consola y el archivo menu_data.json.</p>';
     }
 }
 
-// 2. Genera el HTML del menú
 function renderMenu(menuData) {
     const menuContainer = document.getElementById('menu-content-container');
     let menuHTML = '';
@@ -186,7 +181,8 @@ function renderMenu(menuData) {
     menuData.forEach(category => {
         let itemsHTML = '';
         category.items.forEach(item => {
-            // Generar Checkboxes si existen
+            
+            // --- Generar Opciones (Checkboxes) si existen ---
             let optionsHTML = '';
             if (item.options) {
                 optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
@@ -203,7 +199,7 @@ function renderMenu(menuData) {
                 optionsHTML += '</div>';
             }
 
-            // Generar el HTML del item complejo
+            // --- Generar el HTML del Item ---
             itemsHTML += `
                 <div class="menu-item-complex" data-name="${item.name}" data-price="${item.price}">
                     <div class="item-header">
@@ -211,7 +207,7 @@ function renderMenu(menuData) {
                         <span class="price">${item.price.toFixed(2)}$</span>
                     </div>
                     ${optionsHTML}
-                    <textarea placeholder="Instrucciones Especiales: (Ej: Sin pepinillos, extra queso)" rows="2" class="instrucciones-box"></textarea>
+                    <textarea placeholder="Instrucciones Especiales: (Ej: Poco queso, sin lechuga)" rows="2" class="instrucciones-box"></textarea>
                     <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.name}', ${item.price}, this.parentNode)">
                         Añadir ${item.name} al Pedido
                     </button>
@@ -219,7 +215,7 @@ function renderMenu(menuData) {
             `;
         });
 
-        // Generar la sección de la categoría
+        // --- Generar la Sección de la Categoría ---
         menuHTML += `
             <section class="menu-category">
                 <h2>${category.category}</h2>
@@ -286,7 +282,7 @@ document.getElementById('delivery-checkbox').addEventListener('change', (event) 
 });
 
 window.onload = function() {
-    fetchMenuData(); // Carga y renderiza el menú
+    fetchMenuData(); // Llama a la carga dinámica del menú
     updateCartDisplay();
 
     document.getElementById('promo-container').textContent = '¡2x1 en Arepas Tradicionales!';
