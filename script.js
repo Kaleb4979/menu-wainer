@@ -1,7 +1,7 @@
 // ====================================
 // CONFIGURACIÓN
 // ====================================
-const WHATSAPP_NUMBER = "58412XXXXXXX"; // <-- REEMPLAZA CON TU NÚMERO
+const WHATSAPP_NUMBER = "584120719505"; // <-- REEMPLAZA CON TU NÚMERO
 const DELIVERY_RATE_PER_KM = 1.00; // Costo por kilómetro
 const MINIMUM_DELIVERY_FEE = 1.00; // Tarifa mínima de delivery si se activa
 
@@ -285,3 +285,4 @@ window.onload = function() {
     document.getElementById('promo-container').textContent = '¡2x1 en Arepas Tradicionales!';
     document.getElementById('schedule-container').textContent = 'Abierto de 5:00 PM a 1:00 AM';
 };
+
