@@ -90,10 +90,10 @@ body {
     font-size: 0.9em;
 }
 
-/* --- ESTILOS DE ITEM Y PERSONALIZACIÓN (NUEVOS) --- */
+/* --- ESTILOS DE ITEM Y PERSONALIZACIÓN --- */
 
 .menu-item-complex {
-    background-color: #303030; /* Un gris oscuro para destacar el ítem */
+    background-color: #303030; 
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 8px;
@@ -161,7 +161,6 @@ body {
     font-size: 0.9em;
 }
 
-/* Botón de Añadir ancho completo para ítems complejos */
 .add-to-cart-btn.full-width {
     display: block;
     width: 100%;
@@ -181,7 +180,7 @@ body {
     background-color: #900000;
 }
 
-/* --- ESTILOS DE CARRITO Y DELIVERY (EXISTENTES) --- */
+/* --- ESTILOS DE CARRITO Y DELIVERY --- */
 
 .cart-float {
     position: fixed;
@@ -276,3 +275,6 @@ body {
 footer { 
     display: none; 
 }
+
+.menu-item { display: none; } /* Ocultamos el antiguo formato */
+.add-to-cart-btn { display: none; } /* Ocultamos el antiguo botón si existía */
