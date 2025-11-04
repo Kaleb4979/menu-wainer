@@ -194,7 +194,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         if (distanceKm > 0) {
             const deliveryCost = finalTotal - subtotal;
             
-            message += `✅ *SERVICIO:* DELIVERY 🚚\n`;
+            message += `✅ *SERVICIO:* DELIVERY 🏍️\n`;
             message += `📍 *DISTANCIA CALCULADA:* ${distanceKm.toFixed(2)} km\n`;
             message += `💵 *COSTO DELIVERY:* ${deliveryCost.toFixed(2)}$ (1$/km, mínimo 1$)\n`;
             message += `\n*SUBTOTAL (Comida):* ${subtotal.toFixed(2)}$\n`;
@@ -202,7 +202,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             message += `🗺️ *UBICACIÓN CLIENTE:* ${mapsUrl}\n`;
             
         } else {
-            message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
+            message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🏍️\n`;
             message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación o fue rechazada. El costo de delivery se calculará a la entrega.\n`;
             message += `\n*TOTAL A PAGAR (Comida):* ${subtotal.toFixed(2)}$\n`;
         }
@@ -304,5 +304,6 @@ function checkAndSendOrder() {
         sendOrder(subtotal, subtotal, 0, 0, 0); // Envío pendiente
     }
 }
+
 
 document.addEventListener('DOMContentLoaded', loadMenuData);
