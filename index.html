@@ -1,115 +1,274 @@
-<section class="menu-category">
-    <h2>🥖 Panes: ¡El Clásico Rápido! 💨</h2>
-    <p class="slogan">Ideales para una merienda rápida o un desayuno express.</p>
-    <div class="menu-item-list">
-        <div class="menu-item" data-name="Salchicha" data-price="1.00">
-            <span>Salchicha</span><span class="price">1.00$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Salchicha', 1.00)">+</button>
-            <textarea placeholder="Notas: (Ej: Sin salsa, solo mostaza)" rows="1" class="instrucciones-box"></textarea>
-        </div>
-        <div class="menu-item" data-name="Huevo" data-price="1.00">
-            <span>Huevo</span><span class="price">1.00$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Huevo', 1.00)">+</button>
-            <textarea placeholder="Notas: (Ej: Sin salsa, solo mostaza)" rows="1" class="instrucciones-box"></textarea>
-        </div>
-        <div class="menu-item" data-name="Cebú" data-price="1.00">
-            <span>Cebú</span><span class="price">1.00$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Cebú', 1.00)">+</button>
-            <textarea placeholder="Notas: (Ej: Sin salsa, solo mostaza)" rows="1" class="instrucciones-box"></textarea>
-        </div>
-        <div class="menu-item" data-name="Salchiqueso" data-price="1.50">
-            <span>Salchiqueso</span><span class="price">1.50$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Salchiqueso', 1.50)">+</button>
-            <textarea placeholder="Notas: (Ej: Sin salsa, solo mostaza)" rows="1" class="instrucciones-box"></textarea>
-        </div>
-    </div>
-</section>
-
-<section class="menu-category">
-    <h2>🍟 Hamburguesas: ¡Poder Wainer! 👑</h2>
-    <p class="slogan">Elige la experiencia Wainer que se adapte a tu hambre. Calidad inigualable.</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pa que Wainer - Menú y Pedidos</title>
     
-    <div class="menu-item-list">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="hero">
+        <img src="https://imgur.com/l93VToI.jpg" alt="Logo Pa que Wainer" class="logo">
+        <h1>LA MEJOR CALIDAD EN COMIDA RÁPIDA</h1>
         
-        <div class="menu-item-complex" data-name="Whopper" data-price="3.50">
-            <div class="item-header">
-                <span class="item-title">Whopper</span>
-                <span class="price">3.50$</span>
+        <div id="promo-container" class="promo-tag"></div>
+        <p id="schedule-container" class="schedule"></p>
+    </header>
+
+    <main class="menu-container">
+        
+        <div class="order-options">
+            <div class="delivery-toggle">
+                <label for="delivery-checkbox">
+                    🚚 ¿Desea Delivery?
+                </label>
+                <input type="checkbox" id="delivery-checkbox" onchange="updateCartDisplay()">
             </div>
-            
-            <h3 class="opciones-titulo">Personaliza tu Whopper:</h3>
-            <div class="opciones-grupo">
-                <label><input type="checkbox" data-option-type="salsa" value="Con Todo" checked> Con Todo (Salsas, Vegetales)</label>
-                <label><input type="checkbox" data-option-type="salsa" value="Poca Salsa"> Poca Salsa</label>
-                <label><input type="checkbox" data-option-type="salsa" value="Sin Salsa"> Sin Salsa</label>
-                <label><input type="checkbox" data-option-type="vegetal" value="Sin Cebolla"> Sin Cebolla</label>
-                <label><input type="checkbox" data-option-type="vegetal" value="Sin Tomate"> Sin Tomate</label>
+            <div id="delivery-details" class="delivery-info">
+                Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)
             </div>
-            <textarea placeholder="Instrucciones Especiales: (Ej: Sin pepinillos, extra queso)" rows="2" class="instrucciones-box"></textarea>
-            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Whopper', 3.50, this.parentNode)">Añadir Whopper al Pedido</button>
         </div>
         
-        <div class="menu-item" data-name="Mini de Carne" data-price="1.00">
-            <span>Mini de Carne</span><span class="price">1.00$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Mini de Carne', 1.00)">+</button>
-            <textarea placeholder="Notas: (Ej: Solo ketchup)" rows="1" class="instrucciones-box"></textarea>
+        <div id="reorder-container" style="text-align: center; margin-bottom: 20px;">
         </div>
-        <div class="menu-item" data-name="Pollo H" data-price="1.50">
-            <span>Pollo (Hamburguesa)</span><span class="price">1.50$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Pollo H', 1.50)">+</button>
-            <textarea placeholder="Notas: (Ej: Solo ketchup)" rows="1" class="instrucciones-box"></textarea>
-        </div>
-        <div class="menu-item" data-name="Whopper y Papas" data-price="5.00">
-            <span>Whopper y Papas (Combo)</span><span class="price">5.00$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Whopper y Papas', 5.00)">+</button>
-            <textarea placeholder="Notas: (Ej: Papas sin sal)" rows="1" class="instrucciones-box"></textarea>
-        </div>
-        </div>
-</section>
 
-<section class="menu-category">
-    <h2>🌾 Pan Granjero: El Gigante de la Ciudad 💪</h2>
-    <p class="slogan">Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.</p>
-    <div class="menu-item-list">
-        <div class="menu-item-complex" data-name="Pan Granjero Carne y Cebú" data-price="3.50">
-            <div class="item-header">
-                <span class="item-title">Carne y Cebú</span>
-                <span class="price">3.50$</span>
+        <div id="loading-location" class="loading-message" style="display:none;">
+            Obteniendo tu ubicación para calcular el costo... Por favor, acepta el permiso.
+        </div>
+        
+        <div id="menu-content-container">
+            <section class="menu-category">
+                <h2>🥖 Panes: ¡El Clásico Rápido! 💨</h2>
+                <p class="slogan">Ideales para una merienda rápida o un desayuno express.</p>
+                <div class="menu-item-list">
+                    <div class="menu-item-complex" data-name="Salchicha" data-price="1.00">
+                        <div class="item-header">
+                            <span class="item-title">Salchicha</span>
+                            <span class="price">1.00$</span>
+                        </div>
+                        <textarea placeholder="Notas: (Ej: Sin salsa, solo mostaza)" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Salchicha', 1.00, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Salchiqueso" data-price="1.50">
+                        <div class="item-header">
+                            <span class="item-title">Salchiqueso</span>
+                            <span class="price">1.50$</span>
+                        </div>
+                        <textarea placeholder="Notas: (Ej: Sin salsa, solo mostaza)" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Salchiqueso', 1.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Huevo" data-price="1.00">
+                        <div class="item-header">
+                            <span class="item-title">Huevo</span>
+                            <span class="price">1.00$</span>
+                        </div>
+                        <textarea placeholder="Notas: (Ej: Sin salsa)" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Huevo', 1.00, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Cebu P" data-price="1.00">
+                        <div class="item-header">
+                            <span class="item-title">Cebú</span>
+                            <span class="price">1.00$</span>
+                        </div>
+                        <textarea placeholder="Notas: (Ej: Extra queso)" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Cebú P', 1.00, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="menu-category">
+                <h2>🌾 Pan Granjero: El Gigante de la Ciudad 💪</h2>
+                <p class="slogan">Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.</p>
+                <div class="menu-item-list">
+                    <div class="menu-item-complex" data-name="Pan Granjero Carne y Cebú" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Carne y Cebú</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Poca salsa de ajo, sin queso)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pan Granjero Carne y Cebú', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Pan Granjero Pollo y Cebú" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Pollo y Cebú</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Poca salsa de ajo, sin queso)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pan Granjero Pollo y Cebú', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Pan Granjero Lomo Negro y Cebú" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Lomo Negro y Cebú</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Poca salsa de ajo, sin queso)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pan Granjero Lomo Negro y Cebú', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Pan Granjero Lomito y Cebú" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Lomito y Cebú</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Poca salsa de ajo, sin queso)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pan Granjero Lomito y Cebú', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Pan Granjero Pernil y Cebú" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Pernil y Cebú</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Poca salsa de ajo, sin queso)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pan Granjero Pernil y Cebú', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Pan Granjero Chuleta y Cebú" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Chuleta y Cebú</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Poca salsa de ajo, sin queso)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pan Granjero Chuleta y Cebú', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="menu-category">
+                <h2>🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano! 🇻🇪</h2>
+                <p class="slogan">La tradición que enamora. Rellenos que te harán sentir en casa.</p>
+                <div class="menu-item-list">
+                    <div class="menu-item-complex" data-name="Arepa/T. Tradicional (2x)" data-price="1.50">
+                        <div class="item-header">
+                            <span class="item-title">Tradicional (2x)</span>
+                            <span class="price">1.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Tumbarranchos, Sin repollo)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Arepa/T. Tradicional (2x)', 1.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Arepa/T. Cebú" data-price="1.00">
+                        <div class="item-header">
+                            <span class="item-title">Cebú</span>
+                            <span class="price">1.00$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Tumbarranchos, Sin repollo)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Arepa/T. Cebú', 1.00, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Arepa/T. Jamón y Queso" data-price="1.00">
+                        <div class="item-header">
+                            <span class="item-title">Jamón y Queso</span>
+                            <span class="price">1.00$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Tumbarranchos, Sin repollo)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Arepa/T. Jamón y Queso', 1.00, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    </div>
+            </section>
+
+            <section class="menu-category">
+                <h2>🍟 Hamburguesas: ¡Poder Wainer! 👑</h2>
+                <p class="slogan">Elige la experiencia Wainer que se adapte a tu hambre. Calidad inigualable.</p>
+                
+                <div class="menu-item-list">
+                    
+                    <div class="menu-item-complex" data-name="Whopper" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Whopper</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        
+                        <h3 class="opciones-titulo">Personaliza tu Whopper:</h3>
+                        <div class="opciones-grupo">
+                            <label><input type="checkbox" data-option-type="salsa" value="Con Todo" checked> Con Todo (Salsas, Vegetales)</label>
+                            <label><input type="checkbox" data-option-type="salsa" value="Poca Salsa"> Poca Salsa</label>
+                            <label><input type="checkbox" data-option-type="salsa" value="Sin Salsa"> Sin Salsa</label>
+                            <label><input type="checkbox" data-option-type="vegetal" value="Sin Cebolla"> Sin Cebolla</label>
+                            <label><input type="checkbox" data-option-type="vegetal" value="Sin Tomate"> Sin Tomate</label>
+                        </div>
+                        <textarea placeholder="Instrucciones Especiales: (Ej: Sin pepinillos, extra queso)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Whopper', 3.50, this.parentNode)">Añadir Whopper al Pedido</button>
+                    </div>
+                    
+                    <div class="menu-item-complex" data-name="Mini de Carne" data-price="1.00">
+                        <div class="item-header">
+                            <span class="item-title">Mini de Carne</span>
+                            <span class="price">1.00$</span>
+                        </div>
+                        <textarea placeholder="Notas: (Ej: Solo ketchup)" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Mini de Carne', 1.00, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Pollo H" data-price="1.50">
+                        <div class="item-header">
+                            <span class="item-title">Pollo (Hamburguesa)</span>
+                            <span class="price">1.50$</span>
+                        </div>
+                        <textarea placeholder="Notas: (Ej: Poca mayonesa)" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pollo H', 1.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    </div>
+            </section>
+
+            <section class="menu-category">
+                <h2>🌿 Patacones: Crujientes y Rellenos 🍌</h2>
+                <p class="slogan">La base perfecta para los mejores rellenos. Nuestro favorito.</p>
+                <div class="menu-item-list">
+                    <div class="menu-item-complex" data-name="Patacón Normal" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Normal</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Extra queso de mano)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Patacón Normal', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Patacón y Papa" data-price="5.00">
+                        <div class="item-header">
+                            <span class="item-title">Patacón y Papa</span>
+                            <span class="price">5.00$</span>
+                        </div>
+                        <textarea placeholder="Instrucciones: (Ej: Extra queso de mano)" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Patacón y Papa', 5.00, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    </div>
+            </section>
+
+            <section class="menu-category">
+                <h2>➕ Complementos</h2>
+                <p class="slogan">Añade un extra de sabor a tu pedido.</p>
+                <div class="menu-item-list">
+                    <div class="menu-item-complex" data-name="Yoyos" data-price="3.50">
+                        <div class="item-header">
+                            <span class="item-title">Yoyos</span>
+                            <span class="price">3.50$</span>
+                        </div>
+                        <textarea placeholder="Notas:" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Yoyos', 3.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                    <div class="menu-item-complex" data-name="Servicio de Papas" data-price="2.50">
+                        <div class="item-header">
+                            <span class="item-title">Servicio de Papas</span>
+                            <span class="price">2.50$</span>
+                        </div>
+                        <textarea placeholder="Notas: (Ej: Papas sin sal)" rows="1" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Servicio de Papas', 2.50, this.parentNode)">Añadir al Pedido</button>
+                    </div>
+                </div>
+            </section>
+
             </div>
-            <textarea placeholder="Instrucciones: (Ej: Sin Cebú, Poca salsa de ajo)" rows="2" class="instrucciones-box"></textarea>
-            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Pan Granjero Carne y Cebú', 3.50, this.parentNode)">Añadir al Pedido</button>
-        </div>
-        </div>
-</section>
 
-<section class="menu-category">
-    <h2>🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano! 🇻🇪</h2>
-    <p class="slogan">La tradición que enamora. Rellenos que te harán sentir en casa.</p>
-    <div class="menu-item-list">
-        <div class="menu-item-complex" data-name="Arepa Carne" data-price="3.50">
-            <div class="item-header">
-                <span class="item-title">Arepa de Carne</span>
-                <span class="price">3.50$</span>
-            </div>
-            <textarea placeholder="Instrucciones: (Ej: Tumbarranchos, Sin repollo)" rows="2" class="instrucciones-box"></textarea>
-            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('Arepa de Carne', 3.50, this.parentNode)">Añadir al Pedido</button>
+    </main>
+    
+    <div class="cart-float">
+        <div class="cart-total">
+            🛒 Total: <span id="cart-total-price">0.00</span>$
         </div>
-        </div>
-</section>
-
-<section class="menu-category">
-    <h2>➕ Complementos</h2>
-    <p class="slogan">Añade un extra de sabor a tu pedido.</p>
-    <div class="menu-item-list">
-        <div class="menu-item" data-name="Yoyos" data-price="3.50">
-            <span>Yoyos</span><span class="price">3.50$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Yoyos', 3.50)">+</button>
-            <textarea placeholder="Notas:" rows="1" class="instrucciones-box"></textarea>
-        </div>
-        <div class="menu-item" data-name="Servicio de Papas" data-price="2.50">
-            <span>Servicio de Papas</span><span class="price">2.50$</span>
-            <button class="add-to-cart-btn" onclick="addItem('Servicio de Papas', 2.50)">+</button>
-            <textarea placeholder="Notas: (Ej: Papas sin sal)" rows="1" class="instrucciones-box"></textarea>
-        </div>
+        <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
+            Hacer Pedido por WhatsApp
+        </button>
     </div>
-</section>
+
+    <footer>
+        <p>© 2025 Pa que Wainer. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
