@@ -12,6 +12,8 @@
             --color-wainer-dark: #333;
             --color-wainer-light: #FFF;
             --color-whatsapp-green: #25D366;
+            --color-tag-bg: #C00000; /* Fondo para etiquetas */
+            --color-tag-text: #FFD700; /* Texto para etiquetas */
         }
 
         body {
@@ -46,6 +48,25 @@
             margin: 0;
             text-transform: uppercase;
             letter-spacing: 2px;
+        }
+        
+        .promo-tag {
+            color: var(--color-wainer-light);
+            background-color: var(--color-wainer-dark);
+            padding: 5px 15px;
+            margin-top: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: inline-block;
+            border-radius: 5px;
+        }
+
+        .schedule {
+            color: #DDD;
+            font-size: 0.9em;
+            margin-top: 10px;
+            margin-bottom: 0;
+            padding: 0 10px;
         }
 
         .menu-container {
@@ -84,6 +105,18 @@
             padding: 10px 0;
             border-bottom: 1px dotted #555;
             font-size: 1.1em;
+        }
+
+        /* Estilos de la etiqueta TOP VENTA */
+        .top-venta-tag {
+            background-color: var(--color-tag-bg);
+            color: var(--color-tag-text);
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            white-space: nowrap;
         }
 
         /* Estilos del Carrito */
@@ -224,6 +257,10 @@
     <header class="hero">
         <img src="https://i.imgur.com/PGbrz8M.jpg" alt="Logo Pa que Wainer" class="logo">
         <h1>LA MEJOR CALIDAD EN COMIDA RÁPIDA</h1>
+        
+        <div class="promo-tag">¡Miércoles de 2x1 en Hamburguesas Whopper!</div>
+        
+        <p class="schedule">🕔 **HORARIO DE ATENCIÓN:** Lunes a Domingo de 5:00 PM a 11:00 PM</p>
     </header>
 
     <main class="menu-container">
@@ -231,7 +268,7 @@
         <div class="order-options">
             <div class="delivery-toggle">
                 <label for="delivery-checkbox">
-                    🏍️ ¿Desea Delivery?
+                    🚚 ¿Desea Delivery?
                 </label>
                 <input type="checkbox" id="delivery-checkbox" onchange="updateCartDisplay()">
             </div>
@@ -282,7 +319,7 @@
                     </div>
                 </div>
                 <div class="menu-item" data-id="pan-salchiqueso" data-name="Pan Salchiqueso" data-price="1.50" data-category="Panes">
-                    <span class="item-info">Salchiqueso</span>
+                    <span class="item-info">Salchiqueso <span class="top-venta-tag">⭐ TOP VENTA</span></span>
                     <div class="item-controls">
                         <span class="price">1.50$</span>
                         <div class="quantity-control">
@@ -300,7 +337,7 @@
             <p class="slogan">Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.</p>
             <div class="menu-item-list">
                 <div class="menu-item" data-id="gran-carne" data-name="Granjero Carne y Cebú" data-price="3.50" data-category="Granjero">
-                    <span class="item-info">Carne y Cebú</span>
+                    <span class="item-info">Carne y Cebú <span class="top-venta-tag">⭐ TOP VENTA</span></span>
                     <div class="item-controls">
                         <span class="price">3.50$</span>
                         <div class="quantity-control">
@@ -468,7 +505,7 @@
                     </div>
                 </div>
                 <div class="menu-item highlight-row" data-id="hamb-combo" data-name="Whopper y Papas (Combo)" data-price="5.00" data-category="Hamburguesas">
-                    <span class="item-info">**Whopper y Papas (Combo)**</span>
+                    <span class="item-info">**Whopper y Papas (Combo) <span class="top-venta-tag">⭐ TOP VENTA</span>**</span>
                     <div class="item-controls">
                         <span class="price">**5.00$**</span>
                         <div class="quantity-control">
@@ -519,7 +556,7 @@
                     </div>
                 </div>
                 <div class="menu-item" data-id="pata-especial" data-name="Patacón Especial" data-price="6.00" data-category="Patacones">
-                    <span class="item-info">Patacón Especial</span>
+                    <span class="item-info">Patacón Especial <span class="top-venta-tag">⭐ TOP VENTA</span></span>
                     <div class="item-controls">
                         <span class="price">6.00$</span>
                         <div class="quantity-control">
@@ -593,10 +630,9 @@
         const COOLDOWN_SECONDS = 180; // Límite de 3 minutos
         let cart = {}; 
         
-        // *** COORDENADAS DE TU NEGOCIO (CONFIGURADAS) ***
+        // COORDENADAS DE TU NEGOCIO (CONFIGURADAS)
         const ORIGIN_LAT = 10.6608820; 
         const ORIGIN_LON = -71.5990720; 
-        // ***********************************************
 
 
         // --- Funciones de Utilidad ---
@@ -725,7 +761,7 @@
                 if (distanceKm > 0) {
                     const deliveryCost = finalTotal - subtotal;
                     
-                    message += `✅ *SERVICIO:* DELIVERY 🏍️\n`;
+                    message += `✅ *SERVICIO:* DELIVERY 🚚\n`;
                     message += `📍 *DISTANCIA CALCULADA:* ${distanceKm.toFixed(2)} km\n`;
                     message += `💵 *COSTO DELIVERY:* ${deliveryCost.toFixed(2)}$ (1$/km, mínimo 1$)\n`;
                     message += `\n*SUBTOTAL (Comida):* ${subtotal.toFixed(2)}$\n`;
@@ -733,7 +769,7 @@
                     message += `🗺️ *UBICACIÓN CLIENTE:* ${mapsUrl}\n`;
                     
                 } else {
-                    message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🏍️\n`;
+                    message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
                     message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación o fue rechazada. El costo de delivery se calculará a la entrega.\n`;
                     message += `\n*TOTAL A PAGAR (Comida):* ${subtotal.toFixed(2)}$\n`;
                 }
@@ -772,6 +808,11 @@
             let subtotal = 0;
             for (const id in cart) {
                 subtotal += cart[id].price * cart[id].quantity;
+            }
+
+            if (Object.keys(cart).length === 0) {
+                alert("Por favor, agregue al menos un artículo al carrito antes de hacer el pedido.");
+                return;
             }
 
             if (!isDelivery) {
@@ -832,4 +873,3 @@
     </script>
 </body>
 </html>
-
