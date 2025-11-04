@@ -90,16 +90,10 @@ body {
     font-size: 0.9em;
 }
 
-/* Modificación de .menu-item y eliminación de item-controls y quantity-control no usados */
-.menu-item {
-    display: none; /* Ocultamos el antiguo formato si no lo usaremos */
-}
+/* --- ESTILOS DE ITEM Y PERSONALIZACIÓN (NUEVOS) --- */
 
-/* --- ESTILOS DE PERSONALIZACIÓN Y ESTRUCTURA DE ITEMS --- */
-
-/* Estilo para el contenedor del ítem complejo (el que tiene opciones detalladas o notas) */
 .menu-item-complex {
-    background-color: #303030; 
+    background-color: #303030; /* Un gris oscuro para destacar el ítem */
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 8px;
@@ -167,19 +161,6 @@ body {
     font-size: 0.9em;
 }
 
-/* Botón de Añadir */
-.add-to-cart-btn {
-    background-color: var(--color-wainer-gold);
-    color: var(--color-wainer-dark);
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1em;
-    transition: background-color 0.2s;
-}
-
 /* Botón de Añadir ancho completo para ítems complejos */
 .add-to-cart-btn.full-width {
     display: block;
@@ -189,6 +170,10 @@ body {
     background-color: var(--color-wainer-red);
     color: var(--color-wainer-light);
     font-size: 1.1em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
     transition: background-color 0.2s;
 }
 
@@ -196,7 +181,8 @@ body {
     background-color: #900000;
 }
 
-/* CARRITO FLOTANTE */
+/* --- ESTILOS DE CARRITO Y DELIVERY (EXISTENTES) --- */
+
 .cart-float {
     position: fixed;
     bottom: 0;
@@ -240,7 +226,6 @@ body {
     text-align: left;
 }
 
-/* Sección de Opciones de Pedido (Delivery) */
 .order-options {
     background-color: #444;
     color: white;
@@ -278,7 +263,7 @@ body {
 .delivery-info {
     font-size: 0.9em;
     color: #ccc;
-    margin-left: 0; /* Ajuste para móvil */
+    margin-left: 0; 
 }
 
 .loading-message {
