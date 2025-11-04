@@ -1,8 +1,50 @@
-{
+[
+    {
+        "category": "🥖 Panes: ¡El Clásico Rápido! 💨",
+        "slogan": "Ideales para una merienda rápida o un desayuno express.",
+        "items": [
+            {"name": "Salchicha", "price": 1.00},
+            {"name": "Huevo", "price": 1.00},
+            {"name": "Cebú", "price": 1.00},
+            {"name": "Salchiqueso", "price": 1.50}
+        ]
+    },
+    {
+        "category": "🌾 Pan Granjero: El Gigante de la Ciudad 💪",
+        "slogan": "Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.",
+        "items": [
+            {"name": "Carne y Cebú", "price": 3.50},
+            {"name": "Pollo y Cebú", "price": 3.50},
+            {"name": "Lomo Negro y Cebú", "price": 3.50},
+            {"name": "Lomito y Cebú", "price": 3.50},
+            {"name": "Pernil y Cebú", "price": 3.50},
+            {"name": "Chuleta y Cebú", "price": 3.50}
+        ]
+    },
+    {
+        "category": "🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano! 🇻🇪",
+        "slogan": "La tradición que enamora. Rellenos que te harán sentir en casa.",
+        "items": [
+            {"name": "Tradicional (2x)", "price": 1.50},
+            {"name": "Cebú", "price": 1.00},
+            {"name": "Jamón y Queso", "price": 1.00},
+            {"name": "Carne", "price": 3.50},
+            {"name": "Pollo", "price": 3.50},
+            {"name": "Lomo negro", "price": 3.50},
+            {"name": "Lomito", "price": 3.50},
+            {"name": "Pernil", "price": 3.50},
+            {"name": "Chuleta", "price": 3.50},
+            {"name": "Pollo crispy", "price": 3.50}
+        ]
+    },
+    {
         "category": "🍟 Hamburguesas: ¡Poder Wainer! 👑",
         "slogan": "Elige la experiencia Wainer que se adapte a tu hambre. Calidad inigualable.",
         "items": [
-            // ... otros items ...
+            {"name": "Mini de carne", "price": 1.00},
+            {"name": "Pollo (Hamburguesa)", "price": 1.50},
+            {"name": "Chuleta (Hamburguesa)", "price": 1.50},
+            {"name": "Lomito (Hamburguesa)", "price": 1.50},
             {
                 "name": "Whopper", 
                 "price": 3.50,
@@ -13,10 +55,28 @@
                     {"label": "Sin Cebolla", "value": "Sin Cebolla"},
                     {"label": "Sin Tomate", "value": "Sin Tomate"}
                 ]
-            },  
+            },
             {"name": "Whopper y Papas (Combo)", "price": 5.00},
             {"name": "Whopper mixta", "price": 6.00},
-            {"name": "Whopper extra full", "price": 8.00} // <--- ¡ASEGÚRATE DE QUE NO HAYA COMA AQUÍ!
+            {"name": "Whopper extra full", "price": 8.00}
         ]
-    } // <--- NI AQUÍ SI ES LA ÚLTIMA CATEGORÍA
-] // <--- EL ARCHIVO DEBE TERMINAR ASÍ
+    },
+    {
+        "category": "🌿 Patacones: Crujientes y Rellenos 🍌",
+        "slogan": "La base perfecta para los mejores rellenos. Nuestro favorito.",
+        "items": [
+            {"name": "Patacón Normal", "price": 3.50},
+            {"name": "Patacón y papa", "price": 5.00},
+            {"name": "Patacón especial", "price": 6.00},
+            {"name": "Patacón extra ful", "price": 9.00}
+        ]
+    },
+    {
+        "category": "➕ Complementos",
+        "slogan": "Añade un extra de sabor a tu pedido.",
+        "items": [
+            {"name": "Yoyos", "price": 3.50},
+            {"name": "Servicio de Papas", "price": 2.50}
+        ]
+    }
+]
