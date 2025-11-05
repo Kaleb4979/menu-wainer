@@ -22,6 +22,13 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return distance;
 }
 
+// Nueva función para calcular el costo de delivery (1$ por km, mínimo 1$)
+function getDeliveryCost(distanceKm) {
+    const ratePerKm = 1.00;
+    const minCost = 1.00;
+    return Math.max(minCost, distanceKm * ratePerKm); 
+}
+
 // --- Función principal para cargar el menú ---
 async function loadMenuData() {
     try {
@@ -189,6 +196,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     message += "\n----------------------------------\n";
     
     if (isDelivery) {
+        // CORRECCIÓN: URL de Google Maps para enviar la ubicación exacta
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
         if (distanceKm > 0) {
@@ -275,7 +283,8 @@ function checkAndSendOrder() {
                 
                 const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
                 
-                const deliveryCost = Math.max(1.00, distanceKm * 1.00); 
+                // USANDO FUNCIÓN REFACTORIZADA
+                const deliveryCost = getDeliveryCost(distanceKm); 
                 
                 const finalTotal = subtotal + deliveryCost;
 
