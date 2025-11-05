@@ -9,7 +9,7 @@
     },
     "categories": [
         {
-            "name": "🥖 Panes: ¡El Clásico Rápido!",
+            "name": "🥖 Panes: ¡El Clásico Rápido! 💨",
             "slogan": "Ideales para una merienda rápida o un desayuno express.",
             "items": [
                 {"id": "pan-salchicha", "name": "Pan Salchicha", "price": 1.00, "top_venta": false},
@@ -19,7 +19,7 @@
             ]
         },
         {
-            "name": "🌾 Pan Granjero: El Gigante de la Ciudad",
+            "name": "🌾 Pan Granjero: El Gigante de la Ciudad 💪",
             "slogan": "Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.",
             "items": [
                 {"id": "gran-carne", "name": "Granjero Carne y Cebú", "price": 3.50, "top_venta": true},
@@ -31,7 +31,7 @@
             ]
         },
         {
-            "name": "🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano!",
+            "name": "🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano! 🇻🇪",
             "slogan": "La tradición que enamora. Rellenos que te harán sentir en casa.",
             "items": [
                 {"id": "arepa-tradicional", "name": "Arepa Tradicional (2x)", "price": 1.50, "top_venta": false},
@@ -47,7 +47,19 @@
             "items": [
                 {"id": "hamb-mini", "name": "Mini de Carne", "price": 1.00, "top_venta": false},
                 {"id": "hamb-pollo", "name": "Hamburguesa Pollo", "price": 1.50, "top_venta": false},
-                {"id": "hamb-whopper", "name": "Whopper", "price": 3.50, "top_venta": false},
+                {
+                    "id": "hamb-whopper", 
+                    "name": "Whopper", 
+                    "price": 3.50, 
+                    "top_venta": false,
+                    "options": [
+                        {"label": "Con Todo (Salsas, Veg.)", "value": "Con Todo", "checked": true},
+                        {"label": "Poca Salsa", "value": "Poca Salsa"},
+                        {"label": "Sin Salsa", "value": "Sin Salsa"},
+                        {"label": "Sin Cebolla", "value": "Sin Cebolla"},
+                        {"label": "Sin Tomate", "value": "Sin Tomate"}
+                    ]
+                },
                 {"id": "hamb-combo", "name": "Whopper y Papas (Combo)", "price": 5.00, "top_venta": true},
                 {"id": "hamb-full", "name": "Whopper Extra Full", "price": 8.00, "top_venta": false}
             ]
@@ -72,5 +84,3 @@
         }
     ]
 }
-
-
