@@ -47,7 +47,18 @@
             "items": [
                 {"id": "hamb-mini", "name": "Mini de Carne", "price": 1.00, "top_venta": false},
                 {"id": "hamb-pollo", "name": "Hamburguesa Pollo", "price": 1.50, "top_venta": false},
-                {"id": "hamb-whopper", "name": "Whopper", "price": 3.50, "top_venta": false},
+                {"id": "hamb-whopper", 
+                 "name": "Whopper", 
+                 "price": 3.50, 
+                 "top_venta": false,
+                 "options": [
+                    {"label": "Con Todo (Salsas, Veg.)", "value": "Con Todo", "checked": true},
+                    {"label": "Poca Salsa", "value": "Poca Salsa"},
+                    {"label": "Sin Salsa", "value": "Sin Salsa"},
+                    {"label": "Sin Cebolla", "value": "Sin Cebolla"},
+                    {"label": "Sin Tomate", "value": "Sin Tomate"}
+                 ]
+                },
                 {"id": "hamb-combo", "name": "Whopper y Papas (Combo)", "price": 5.00, "top_venta": true},
                 {"id": "hamb-full", "name": "Whopper Extra Full", "price": 8.00, "top_venta": false}
             ]
@@ -72,5 +83,3 @@
         }
     ]
 }
-
-
