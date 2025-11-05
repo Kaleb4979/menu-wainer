@@ -39,11 +39,39 @@ function getDeliveryCost(distanceKm) {
     return Math.max(minCost, distanceKm * ratePerKm); 
 }
 
-// --- LÓGICA DE PERSONALIZACIÓN: NUEVA FUNCIÓN ---
-/**
- * Agrega un producto al carrito, capturando las opciones de personalización (checkboxes y notas).
- */
+
+// --- LÓGICA DE CARRO: Dos modos de añadir ---
+
+// 1. MODO SIMPLE (+/-): Para ítems sin personalización (Pan Salchicha, etc.)
+function updateCart(itemId, change) {
+    const itemData = ALL_ITEMS_MAP[itemId];
+    if (!itemData || itemData.options) return; // Si tiene opciones, se usa addItemWithDetails
+
+    // Usamos el itemId como uniqueId para ítems simples
+    let currentQuantity = cart[itemId] ? cart[itemId].quantity : 0;
+    let newQuantity = currentQuantity + change;
+
+    if (newQuantity < 0) return;
+
+    if (newQuantity === 0) {
+        delete cart[itemId];
+    } else {
+        cart[itemId] = {
+            id: itemId, // El ID simple es el ID único
+            name: itemData.name,
+            price: itemData.price,
+            basePrice: itemData.price,
+            quantity: newQuantity,
+            isSimple: true // Marca para saber que usa el sistema +/-
+        };
+    }
+
+    updateCartDisplay();
+}
+
+// 2. MODO COMPLEJO (Añadir al Pedido): Para ítems con personalización (Whopper, etc.)
 function addItemWithDetails(id, name, price, itemElement) {
+    // Esto es para ítems que NO usan el sistema de +/-
     let details = [];
     
     // 1. Recoger opciones de Checkbox
@@ -64,7 +92,7 @@ function addItemWithDetails(id, name, price, itemElement) {
 
     // 3. Crear el nombre completo del producto y un ID único para la personalización
     const itemDetails = details.length > 0 ? ` (${details.join(', ')})` : '';
-    const uniqueId = `${id}-${Date.now()}`;
+    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const itemName = name + itemDetails;
 
     // 4. Agregar al carrito
@@ -74,32 +102,34 @@ function addItemWithDetails(id, name, price, itemElement) {
         price: price, 
         basePrice: price,
         quantity: 1,
-        // Almacenamos el ID base para futuras referencias si es necesario
-        baseId: id 
+        isSimple: false, // Marca para saber que NO usa el sistema +/-
+        baseId: id // Para referencias
     };
     
     // 5. Limpiar y resetear UI después de añadir
     if (notesBox) {
         notesBox.value = '';
-        checkboxes.forEach(cb => {
-            if (cb.getAttribute('data-default-checked') === 'true') {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-            }
-        });
     }
+    checkboxes.forEach(cb => {
+        // Asume que si no tiene data-default-checked es false, y si lo tiene es true
+        if (cb.getAttribute('data-default-checked') === 'true') {
+            cb.checked = true;
+        } else {
+            cb.checked = false;
+        }
+    });
 
     updateCartDisplay();
 }
 
-// Lógica para quitar un item personalizado del carrito (como ya no hay +/-)
+// 3. FUNCIÓN DE ELIMINACIÓN ÚNICA (desde el carrito detallado)
 function removeItemFromCart(uniqueId) {
     if (cart[uniqueId]) {
         delete cart[uniqueId];
     }
     updateCartDisplay();
 }
+
 
 // --- Función principal para cargar el menú ---
 async function loadMenuData() {
@@ -153,13 +183,17 @@ async function loadMenuData() {
                 
                 const topVentaTag = item.top_venta ? '<span class="top-venta-tag">⭐ TOP VENTA</span>' : '';
                 
-                // --- Generar Opciones (Checkboxes) si existen ---
-                let optionsHTML = '';
-                let placeholderText = 'Instrucciones Especiales: (Ej: Poco queso, sin lechuga)';
+                // Determinar si el item es Simple o Complejo (con Opciones)
+                const isComplex = item.options && item.options.length > 0;
+                
+                if (isComplex) {
+                    // --- GENERACIÓN DE ITEM COMPLEJO (Botón Añadir + Opciones) ---
+                    let optionsHTML = '';
+                    let placeholderText = 'Instrucciones Especiales: (Ej: Poco queso, sin lechuga)';
 
-                if (item.options) {
                     optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
                     optionsHTML += '<div class="opciones-grupo">';
+                    // **Asegúrate de que la Whopper tiene las opciones en tu menu_data.json**
                     item.options.forEach(option => {
                         const isChecked = option.checked ? 'checked' : '';
                         const defaultAttr = option.checked ? 'data-default-checked="true"' : '';
@@ -171,23 +205,37 @@ async function loadMenuData() {
                     });
                     optionsHTML += '</div>';
                     placeholderText = 'Instrucciones: (Ej: Sin pepinillos, extra queso)';
-                }
 
-
-                // --- Generar el HTML del Item ---
-                menuHtml += `
-                    <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
-                        <div class="item-header">
-                            <span class="item-title">${item.name} ${topVentaTag}</span>
-                            <span class="price">${item.price.toFixed(2)}$</span>
+                    menuHtml += `
+                        <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
+                            <div class="item-header">
+                                <span class="item-title">${item.name} ${topVentaTag}</span>
+                                <span class="price">${item.price.toFixed(2)}$</span>
+                            </div>
+                            ${optionsHTML}
+                            <textarea placeholder="${placeholderText}" rows="2" class="instrucciones-box"></textarea>
+                            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
+                                Añadir ${item.name} al Pedido
+                            </button>
                         </div>
-                        ${optionsHTML}
-                        <textarea placeholder="${placeholderText}" rows="2" class="instrucciones-box"></textarea>
-                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
-                            Añadir ${item.name} al Pedido
-                        </button>
-                    </div>
-                `;
+                    `;
+
+                } else {
+                    // --- GENERACIÓN DE ITEM SIMPLE (Botones +/-) ---
+                    menuHtml += `
+                        <div class="menu-item" data-id="${item.id}">
+                            <span class="item-info">${item.name} ${topVentaTag}</span>
+                            <div class="item-controls">
+                                <span class="price">${item.price.toFixed(2)}$</span>
+                                <div class="quantity-control">
+                                    <button class="quantity-btn" onclick="updateCart('${item.id}', -1)">-</button>
+                                    <span class="item-quantity">0</span>
+                                    <button class="quantity-btn" onclick="updateCart('${item.id}', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
             });
 
             menuHtml += `
@@ -209,7 +257,45 @@ async function loadMenuData() {
 }
 
 
-// --- Funciones de Carrito y Display ---
+// --- FUNCIONES DE DISPLAY Y CARRITO ---
+
+/**
+ * Renderiza la sección de carrito detallado para que el usuario pueda ver y eliminar ítems.
+ */
+function renderCartItems() {
+    const cartContainer = document.getElementById('cart-items-container');
+    let cartHtml = '';
+    let totalItemsInCart = Object.keys(cart).length;
+
+    if (totalItemsInCart === 0) {
+        cartContainer.innerHTML = '<p class="empty-cart-message">Tu pedido está vacío. ¡Comienza a añadir!</p>';
+        cartContainer.style.display = 'none';
+        return;
+    }
+    
+    cartContainer.style.display = 'block';
+    cartHtml += '<h3 class="cart-title">📝 Detalle de tu Pedido:</h3>';
+
+    for (const uniqueId in cart) {
+        const item = cart[uniqueId];
+        // Los ítems simples pueden tener cantidad > 1. Los complejos siempre se agregan como 1x.
+        const itemQty = item.isSimple ? item.quantity : 1; 
+
+        cartHtml += `
+            <div class="cart-item-detail">
+                <span class="cart-item-qty">${itemQty}x</span>
+                <span class="cart-item-name">${item.name}</span>
+                <span class="cart-item-price">${(item.price * itemQty).toFixed(2)}$</span>
+                <button class="remove-item-btn" 
+                        onclick="removeItemFromCart('${uniqueId}')">
+                    ❌
+                </button>
+            </div>
+        `;
+    }
+    
+    cartContainer.innerHTML = cartHtml;
+}
 
 function updateCartDisplay() {
     if (!MENU_DATA) return;
@@ -220,9 +306,20 @@ function updateCartDisplay() {
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
         subtotal += item.price * item.quantity;
-        totalItems += item.quantity; // Siempre es 1 en esta lógica de personalización
+        totalItems += item.quantity;
     }
     
+    // Renderiza el carrito detallado
+    renderCartItems(); 
+
+    // Actualiza cantidades en los botones +/- para ítems simples
+    document.querySelectorAll('.menu-item').forEach(itemEl => {
+        const itemId = itemEl.getAttribute('data-id');
+        const quantityElement = itemEl.querySelector('.item-quantity');
+        // Solo para ítems simples, que usan el itemId como clave
+        quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
+    });
+
     // Si es un pedido de mesa, siempre es para consumo en local, ignoramos el checkbox
     const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked; 
     
@@ -241,7 +338,6 @@ function updateCartDisplay() {
     } else {
         checkoutBtn.disabled = totalItems === 0;
     }
-
 
     // Lógica del Delivery/Mesa y display de totales
     let currentTotal = subtotal;
@@ -276,7 +372,7 @@ function updateCartDisplay() {
 }
 
 
-// --- Lógica de Envío ---
+// --- Lógica de Envío (Corregida la URL de Google Maps) ---
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
@@ -287,7 +383,11 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     let index = 1;
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
-        message += `${index}. ${item.name} - ${item.basePrice.toFixed(2)}$\n`; // La cantidad es siempre 1 por la lógica de personalización
+        const itemQty = item.isSimple ? item.quantity : 1;
+        const itemName = item.name;
+        const itemPrice = item.price * itemQty;
+
+        message += `${index}. *${itemQty}x* ${itemName} = ${itemPrice.toFixed(2)}$\n`; 
         index++;
     }
 
@@ -302,6 +402,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     } else if (isDelivery) {
         // Lógica para pedidos de DELIVERY
         
+        // CORRECCIÓN: URL de Google Maps para que sea funcional
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
         if (distanceKm > 0) {
