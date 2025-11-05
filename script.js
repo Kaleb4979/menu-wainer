@@ -2,8 +2,17 @@
 let MENU_DATA = null;
 let ALL_ITEMS_MAP = {}; // Mapa para acceder fácilmente a los ítems por ID
 let cart = {}; 
-        
+let currentMesa = null; // NUEVA VARIABLE GLOBAL
+
 // --- Funciones de Utilidad ---
+
+// Función para obtener parámetros de la URL
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    const results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
 
 // Función de Haversine para calcular la distancia entre dos coordenadas (en km)
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -22,7 +31,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return distance;
 }
 
-// Nueva función para calcular el costo de delivery (1$ por km, mínimo 1$)
+// Función para calcular el costo de delivery (1$ por km, mínimo 1$)
 function getDeliveryCost(distanceKm) {
     const ratePerKm = 1.00;
     const minCost = 1.00;
@@ -32,13 +41,33 @@ function getDeliveryCost(distanceKm) {
 // --- Función principal para cargar el menú ---
 async function loadMenuData() {
     try {
-        // Fetch de datos desde el archivo JSON
         const response = await fetch('menu_data.json');
         if (!response.ok) {
             throw new Error('No se pudo cargar menu_data.json');
         }
         const data = await response.json();
         MENU_DATA = data;
+        
+        // >> LÓGICA DE DETECCIÓN DE MESA <<
+        const mesaParam = getUrlParameter('mesa');
+        const orderOptionsEl = document.querySelector('.order-options');
+        const mesaInfoEl = document.getElementById('mesa-info');
+        
+        if (mesaParam && !isNaN(parseInt(mesaParam))) {
+            currentMesa = parseInt(mesaParam);
+            
+            // 1. Mostrar la mesa actual
+            mesaInfoEl.style.display = 'block';
+            mesaInfoEl.textContent = `¡Estás pidiendo desde la MESA N° ${currentMesa}! Tu pedido es para comer en local.`;
+            
+            // 2. Ocultar la opción de Delivery
+            orderOptionsEl.style.display = 'none';
+            
+        } else {
+            // Si no hay mesa, se asume Delivery o Retiro, y se muestran las opciones
+            currentMesa = null;
+            orderOptionsEl.style.display = 'flex'; 
+        }
         
         // 1. Inicializar el mapa de ítems y poblar la información del header
         document.getElementById('promo-container').textContent = data.info.promo;
@@ -54,7 +83,6 @@ async function loadMenuData() {
             `;
 
             category.items.forEach(item => {
-                // Almacenar el ítem en el mapa global para acceso rápido por ID
                 ALL_ITEMS_MAP[item.id] = {...item, category_name: category.name};
                 
                 const topVentaTag = item.top_venta ? '<span class="top-venta-tag">⭐ TOP VENTA</span>' : '';
@@ -130,7 +158,9 @@ function updateCartDisplay() {
         totalItems += item.quantity;
     }
 
-    const isDelivery = document.getElementById('delivery-checkbox').checked;
+    // Si es un pedido de mesa, siempre es para consumo en local, ignoramos el checkbox
+    const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked; 
+    
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
 
@@ -158,16 +188,20 @@ function updateCartDisplay() {
         checkoutBtn.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
     }
 
-    // Lógica del Delivery y display de totales
-    if (isDelivery) {
-        document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
+    // Lógica del Delivery/Mesa y display de totales
+    document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
+    
+    if (currentMesa) {
+        if (totalItems > 0 && !checkoutBtn.disabled) {
+            checkoutBtn.textContent = `Hacer Pedido MESA ${currentMesa} - Total: ${subtotal.toFixed(2)}$`;
+        }
+    } else if (isDelivery) {
         deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación. (1$ por km, mínimo 1$)";
         
         if (totalItems > 0 && !checkoutBtn.disabled) {
              checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
         }
     } else {
-        document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
         deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
         
         if (totalItems > 0 && !checkoutBtn.disabled) {
@@ -184,7 +218,7 @@ function updateCartDisplay() {
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
-    const isDelivery = document.getElementById('delivery-checkbox').checked;
+    const isDelivery = !currentMesa && document.getElementById('delivery-checkbox').checked;
     let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
     
     for (const id in cart) {
@@ -195,8 +229,16 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
-    if (isDelivery) {
-        // CORRECCIÓN: URL de Google Maps para enviar la ubicación exacta
+    if (currentMesa) {
+        // Lógica para pedidos de MESA
+        message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
+        message += `✅ *SERVICIO:* COMER EN LOCAL 🍽️\n`;
+        message += `💰 *TOTAL A PAGAR:* ${subtotal.toFixed(2)}$\n`;
+        
+    } else if (isDelivery) {
+        // Lógica para pedidos de DELIVERY
+        
+        // CORRECCIÓN: URL de Google Maps
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
         if (distanceKm > 0) {
@@ -215,6 +257,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             message += `\n*TOTAL A PAGAR (Comida):* ${subtotal.toFixed(2)}$\n`;
         }
     } else {
+        // Lógica para pedidos de RETIRO EN TIENDA
         message += `✅ *SERVICIO:* RETIRO EN TIENDA 🚶\n`;
         message += `💰 *TOTAL A PAGAR:* ${subtotal.toFixed(2)}$\n`;
     }
@@ -234,8 +277,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 }
 
 function checkAndSendOrder() {
-    const isDelivery = document.getElementById('delivery-checkbox').checked;
-    const checkoutBtn = document.getElementById('checkout-btn');
     
     if (!MENU_DATA) {
          alert("Error: El menú no se ha cargado correctamente.");
@@ -260,12 +301,22 @@ function checkAndSendOrder() {
         return;
     }
 
+    // Si es una mesa, saltamos la verificación de Delivery y Geolocalización.
+    if (currentMesa) {
+        sendOrder(subtotal, subtotal, 0, 0, 0); 
+        return;
+    }
+    
+    // Si NO es una mesa, revisamos si es Delivery o Retiro.
+    const isDelivery = document.getElementById('delivery-checkbox').checked;
+
     if (!isDelivery) {
         sendOrder(subtotal, subtotal, 0, 0, 0); 
         return;
     }
     
     // Si es Delivery, intentamos obtener la ubicación y calcular
+    const checkoutBtn = document.getElementById('checkout-btn');
     checkoutBtn.disabled = true;
     checkoutBtn.textContent = 'Calculando envío...';
     document.getElementById('loading-location').style.display = 'block';
@@ -274,7 +325,6 @@ function checkAndSendOrder() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                // Éxito: Ubicación obtenida
                 const clientLat = position.coords.latitude;
                 const clientLon = position.coords.longitude;
                 
@@ -283,7 +333,6 @@ function checkAndSendOrder() {
                 
                 const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
                 
-                // USANDO FUNCIÓN REFACTORIZADA
                 const deliveryCost = getDeliveryCost(distanceKm); 
                 
                 const finalTotal = subtotal + deliveryCost;
@@ -294,7 +343,6 @@ function checkAndSendOrder() {
                 sendOrder(subtotal, finalTotal, distanceKm, clientLat, clientLon);
             },
             (error) => {
-                // Error: Usuario no dio permiso o hay error
                 console.error('Error de geolocalización:', error);
                 
                 checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
@@ -304,7 +352,6 @@ function checkAndSendOrder() {
             }
         );
     } else {
-        // Navegador no soporta Geolocalización
         console.error('Geolocalización no soportada.');
         
         checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
