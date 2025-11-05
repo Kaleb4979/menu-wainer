@@ -1,7 +1,7 @@
 {
     "info": {
         "whatsapp_number": "584246789719",
-        "cooldown_seconds": 180,
+        "cooldown_seconds": 45,
         "origin_lat": 10.660805,
         "origin_lon": -71.599221,
         "schedule": "Miércoles a Domingo de 6:00 PM a 12:00 AM",
@@ -72,4 +72,5 @@
         }
     ]
 }
+
 
