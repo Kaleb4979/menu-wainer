@@ -1,12 +1,15 @@
-// Variables globales para datos que se cargarán
+// ====================================
+// CONFIGURACIÓN (Variables tomadas de menu_data.json)
+// ====================================
 let MENU_DATA = null;
-let ALL_ITEMS_MAP = {}; // Mapa para acceder fácilmente a los ítems por ID
+let ALL_ITEMS_MAP = {}; 
 let cart = {}; 
-let currentMesa = null; // Variable global para el número de mesa
+let currentMesa = null; 
+let deliveryFee = 0;
+let userLocation = null;
 
 // --- Funciones de Utilidad ---
 
-// Función para obtener parámetros de la URL (clave para los QR de mesa)
 function getUrlParameter(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
     const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
@@ -14,7 +17,6 @@ function getUrlParameter(name) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
-// Función de Haversine para calcular la distancia entre dos coordenadas (en km)
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const toRad = (value) => (value * Math.PI) / 180;
@@ -31,11 +33,72 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return distance;
 }
 
-// Función para calcular el costo de delivery (1$ por km, mínimo 1$)
 function getDeliveryCost(distanceKm) {
     const ratePerKm = 1.00;
     const minCost = 1.00;
     return Math.max(minCost, distanceKm * ratePerKm); 
+}
+
+// --- LÓGICA DE PERSONALIZACIÓN: NUEVA FUNCIÓN ---
+/**
+ * Agrega un producto al carrito, capturando las opciones de personalización (checkboxes y notas).
+ */
+function addItemWithDetails(id, name, price, itemElement) {
+    let details = [];
+    
+    // 1. Recoger opciones de Checkbox
+    const checkboxes = itemElement.querySelectorAll('.opciones-grupo input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            details.push(cb.value);
+        }
+    });
+
+    // 2. Recoger notas de la caja de texto
+    const notesBox = itemElement.querySelector('.instrucciones-box');
+    const notes = notesBox ? notesBox.value.trim() : '';
+    
+    if (notes) {
+        details.push(`Nota: ${notes}`);
+    }
+
+    // 3. Crear el nombre completo del producto y un ID único para la personalización
+    const itemDetails = details.length > 0 ? ` (${details.join(', ')})` : '';
+    const uniqueId = `${id}-${Date.now()}`;
+    const itemName = name + itemDetails;
+
+    // 4. Agregar al carrito
+    cart[uniqueId] = { 
+        id: uniqueId,
+        name: itemName, 
+        price: price, 
+        basePrice: price,
+        quantity: 1,
+        // Almacenamos el ID base para futuras referencias si es necesario
+        baseId: id 
+    };
+    
+    // 5. Limpiar y resetear UI después de añadir
+    if (notesBox) {
+        notesBox.value = '';
+        checkboxes.forEach(cb => {
+            if (cb.getAttribute('data-default-checked') === 'true') {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+    }
+
+    updateCartDisplay();
+}
+
+// Lógica para quitar un item personalizado del carrito (como ya no hay +/-)
+function removeItemFromCart(uniqueId) {
+    if (cart[uniqueId]) {
+        delete cart[uniqueId];
+    }
+    updateCartDisplay();
 }
 
 // --- Función principal para cargar el menú ---
@@ -56,21 +119,18 @@ async function loadMenuData() {
         if (mesaParam && !isNaN(parseInt(mesaParam))) {
             currentMesa = parseInt(mesaParam);
             
-            // 1. Mostrar la mesa actual
-            if (mesaInfoEl) { // Agregamos una verificación de seguridad
+            if (mesaInfoEl) { 
                 mesaInfoEl.style.display = 'block';
                 mesaInfoEl.textContent = `¡Estás pidiendo desde la MESA N° ${currentMesa}! Tu pedido es para comer en local.`;
             }
             
-            // 2. Ocultar la opción de Delivery
-            if (orderOptionsEl) { // Agregamos una verificación de seguridad
+            if (orderOptionsEl) { 
                 orderOptionsEl.style.display = 'none';
             }
             
         } else {
-            // Si no hay mesa, se asume Delivery o Retiro, y se muestran las opciones
             currentMesa = null;
-            if (orderOptionsEl) { // Agregamos una verificación de seguridad
+            if (orderOptionsEl) { 
                 orderOptionsEl.style.display = 'flex'; 
             }
         }
@@ -89,21 +149,43 @@ async function loadMenuData() {
             `;
 
             category.items.forEach(item => {
-                ALL_ITEMS_MAP[item.id] = {...item, category_name: category.name};
+                ALL_ITEMS_MAP[item.id] = item;
                 
                 const topVentaTag = item.top_venta ? '<span class="top-venta-tag">⭐ TOP VENTA</span>' : '';
                 
+                // --- Generar Opciones (Checkboxes) si existen ---
+                let optionsHTML = '';
+                let placeholderText = 'Instrucciones Especiales: (Ej: Poco queso, sin lechuga)';
+
+                if (item.options) {
+                    optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
+                    optionsHTML += '<div class="opciones-grupo">';
+                    item.options.forEach(option => {
+                        const isChecked = option.checked ? 'checked' : '';
+                        const defaultAttr = option.checked ? 'data-default-checked="true"' : '';
+                        optionsHTML += `
+                            <label>
+                                <input type="checkbox" value="${option.value}" ${isChecked} ${defaultAttr}> 
+                                ${option.label}
+                            </label>`;
+                    });
+                    optionsHTML += '</div>';
+                    placeholderText = 'Instrucciones: (Ej: Sin pepinillos, extra queso)';
+                }
+
+
+                // --- Generar el HTML del Item ---
                 menuHtml += `
-                    <div class="menu-item" data-id="${item.id}">
-                        <span class="item-info">${item.name} ${topVentaTag}</span>
-                        <div class="item-controls">
+                    <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
+                        <div class="item-header">
+                            <span class="item-title">${item.name} ${topVentaTag}</span>
                             <span class="price">${item.price.toFixed(2)}$</span>
-                            <div class="quantity-control">
-                                <button class="quantity-btn" onclick="updateCart('${item.id}', -1)">-</button>
-                                <span class="item-quantity">0</span>
-                                <button class="quantity-btn" onclick="updateCart('${item.id}', 1)">+</button>
-                            </div>
                         </div>
+                        ${optionsHTML}
+                        <textarea placeholder="${placeholderText}" rows="2" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
+                            Añadir ${item.name} al Pedido
+                        </button>
                     </div>
                 `;
             });
@@ -128,29 +210,6 @@ async function loadMenuData() {
 
 
 // --- Funciones de Carrito y Display ---
-function updateCart(itemId, change) {
-    const itemData = ALL_ITEMS_MAP[itemId];
-    if (!itemData) return;
-    
-    let currentQuantity = cart[itemId] ? cart[itemId].quantity : 0;
-    let newQuantity = currentQuantity + change;
-
-    if (newQuantity < 0) return;
-
-    if (newQuantity === 0) {
-        delete cart[itemId];
-    } else {
-        cart[itemId] = {
-            id: itemId,
-            name: itemData.name,
-            price: itemData.price,
-            category: itemData.category_name,
-            quantity: newQuantity
-        };
-    }
-
-    updateCartDisplay();
-}
 
 function updateCartDisplay() {
     if (!MENU_DATA) return;
@@ -158,32 +217,19 @@ function updateCartDisplay() {
     let subtotal = 0;
     let totalItems = 0;
     
-    for (const id in cart) {
-        const item = cart[id];
+    for (const uniqueId in cart) {
+        const item = cart[uniqueId];
         subtotal += item.price * item.quantity;
-        totalItems += item.quantity;
+        totalItems += item.quantity; // Siempre es 1 en esta lógica de personalización
     }
-
+    
     // Si es un pedido de mesa, siempre es para consumo en local, ignoramos el checkbox
     const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked; 
     
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
 
-    document.querySelectorAll('.menu-item').forEach(itemEl => {
-        const itemId = itemEl.getAttribute('data-id');
-        const quantityElement = itemEl.querySelector('.item-quantity');
-        quantityElement.textContent = cart[itemId] ? cart[itemId].quantity : 0;
-    });
-
-    if (totalItems > 0) {
-        checkoutBtn.disabled = false;
-    } else {
-        checkoutBtn.disabled = true;
-        checkoutBtn.textContent = `Hacer Pedido por WhatsApp`;
-    }
-    
-    // Lógica de deshabilitación por Límite de tiempo
+    // Deshabilitación por Límite de tiempo
     const lastOrderTime = localStorage.getItem('lastOrderTime');
     const now = Date.now();
     const COOLDOWN_SECS = MENU_DATA.info.cooldown_seconds;
@@ -192,22 +238,31 @@ function updateCartDisplay() {
         checkoutBtn.disabled = true;
         const remainingSeconds = Math.ceil((COOLDOWN_SECS * 1000 - (now - lastOrderTime)) / 1000);
         checkoutBtn.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
+    } else {
+        checkoutBtn.disabled = totalItems === 0;
     }
 
+
     // Lógica del Delivery/Mesa y display de totales
+    let currentTotal = subtotal;
+
     document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
     
     if (currentMesa) {
+        // Pedido de MESA
+        deliveryDetails.textContent = "";
         if (totalItems > 0 && !checkoutBtn.disabled) {
-            checkoutBtn.textContent = `Hacer Pedido MESA ${currentMesa} - Total: ${subtotal.toFixed(2)}$`;
+            checkoutBtn.textContent = `Hacer Pedido MESA ${currentMesa} - Total: ${currentTotal.toFixed(2)}$`;
         }
     } else if (isDelivery) {
+        // Pedido de DELIVERY
         deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación. (1$ por km, mínimo 1$)";
         
         if (totalItems > 0 && !checkoutBtn.disabled) {
              checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
         }
     } else {
+        // Pedido de RETIRO
         deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
         
         if (totalItems > 0 && !checkoutBtn.disabled) {
@@ -220,6 +275,7 @@ function updateCartDisplay() {
     }
 }
 
+
 // --- Lógica de Envío ---
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
@@ -227,10 +283,12 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     const isDelivery = !currentMesa && document.getElementById('delivery-checkbox').checked;
     let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
     
-    for (const id in cart) {
-        const item = cart[id];
-        const itemSubtotal = item.price * item.quantity;
-        message += `*${item.quantity}x* ${item.name} = ${itemSubtotal.toFixed(2)}$\n`;
+    // Lista de ítems
+    let index = 1;
+    for (const uniqueId in cart) {
+        const item = cart[uniqueId];
+        message += `${index}. ${item.name} - ${item.basePrice.toFixed(2)}$\n`; // La cantidad es siempre 1 por la lógica de personalización
+        index++;
     }
 
     message += "\n----------------------------------\n";
@@ -244,7 +302,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     } else if (isDelivery) {
         // Lógica para pedidos de DELIVERY
         
-        // CORRECCIÓN: URL de Google Maps
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
         if (distanceKm > 0) {
@@ -327,7 +384,6 @@ function checkAndSendOrder() {
     checkoutBtn.textContent = 'Calculando envío...';
     document.getElementById('loading-location').style.display = 'block';
 
-
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -368,4 +424,3 @@ function checkAndSendOrder() {
 }
 
 document.addEventListener('DOMContentLoaded', loadMenuData);
-
