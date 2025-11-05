@@ -269,7 +269,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     }
     
     message += "----------------------------------\n";
-    message += "\nPor favor, indique su nombre y dirección exacta.";
+    message += "\nPor favor, indique su nombre.";
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${MENU_DATA.info.whatsapp_number}?text=${encodedMessage}`;
@@ -368,3 +368,4 @@ function checkAndSendOrder() {
 }
 
 document.addEventListener('DOMContentLoaded', loadMenuData);
+
