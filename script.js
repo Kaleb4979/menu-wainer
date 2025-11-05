@@ -71,7 +71,6 @@ function updateCart(itemId, change) {
 
 // 2. MODO COMPLEJO (Añadir al Pedido): Para ítems con personalización (Whopper, etc.)
 function addItemWithDetails(id, name, price, itemElement) {
-    // Esto es para ítems que NO usan el sistema de +/-
     let details = [];
     
     // 1. Recoger opciones de Checkbox
@@ -111,7 +110,6 @@ function addItemWithDetails(id, name, price, itemElement) {
         notesBox.value = '';
     }
     checkboxes.forEach(cb => {
-        // Asume que si no tiene data-default-checked es false, y si lo tiene es true
         if (cb.getAttribute('data-default-checked') === 'true') {
             cb.checked = true;
         } else {
@@ -131,7 +129,7 @@ function removeItemFromCart(uniqueId) {
 }
 
 
-// --- Función principal para cargar el menú ---
+// --- Función principal para cargar el menú y Renderizar ---
 async function loadMenuData() {
     try {
         const response = await fetch('menu_data.json');
@@ -193,7 +191,6 @@ async function loadMenuData() {
 
                     optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
                     optionsHTML += '<div class="opciones-grupo">';
-                    // **Asegúrate de que la Whopper tiene las opciones en tu menu_data.json**
                     item.options.forEach(option => {
                         const isChecked = option.checked ? 'checked' : '';
                         const defaultAttr = option.checked ? 'data-default-checked="true"' : '';
@@ -278,7 +275,6 @@ function renderCartItems() {
 
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
-        // Los ítems simples pueden tener cantidad > 1. Los complejos siempre se agregan como 1x.
         const itemQty = item.isSimple ? item.quantity : 1; 
 
         cartHtml += `
@@ -309,7 +305,6 @@ function updateCartDisplay() {
         totalItems += item.quantity;
     }
     
-    // Renderiza el carrito detallado
     renderCartItems(); 
 
     // Actualiza cantidades en los botones +/- para ítems simples
@@ -320,7 +315,6 @@ function updateCartDisplay() {
         quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
     });
 
-    // Si es un pedido de mesa, siempre es para consumo en local, ignoramos el checkbox
     const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked; 
     
     const deliveryDetails = document.getElementById('delivery-details');
@@ -339,26 +333,22 @@ function updateCartDisplay() {
         checkoutBtn.disabled = totalItems === 0;
     }
 
-    // Lógica del Delivery/Mesa y display de totales
     let currentTotal = subtotal;
 
     document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
     
     if (currentMesa) {
-        // Pedido de MESA
         deliveryDetails.textContent = "";
         if (totalItems > 0 && !checkoutBtn.disabled) {
             checkoutBtn.textContent = `Hacer Pedido MESA ${currentMesa} - Total: ${currentTotal.toFixed(2)}$`;
         }
     } else if (isDelivery) {
-        // Pedido de DELIVERY
         deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación. (1$ por km, mínimo 1$)";
         
         if (totalItems > 0 && !checkoutBtn.disabled) {
              checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
         }
     } else {
-        // Pedido de RETIRO
         deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
         
         if (totalItems > 0 && !checkoutBtn.disabled) {
@@ -372,7 +362,7 @@ function updateCartDisplay() {
 }
 
 
-// --- Lógica de Envío (Corregida la URL de Google Maps) ---
+// --- Lógica de Envío (Incluye GPS y Mesa) ---
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
@@ -402,7 +392,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     } else if (isDelivery) {
         // Lógica para pedidos de DELIVERY
         
-        // CORRECCIÓN: URL de Google Maps para que sea funcional
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
         if (distanceKm > 0) {
