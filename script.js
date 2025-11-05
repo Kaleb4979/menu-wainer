@@ -2,11 +2,11 @@
 let MENU_DATA = null;
 let ALL_ITEMS_MAP = {}; // Mapa para acceder fácilmente a los ítems por ID
 let cart = {}; 
-let currentMesa = null; // NUEVA VARIABLE GLOBAL
+let currentMesa = null; // Variable global para el número de mesa
 
 // --- Funciones de Utilidad ---
 
-// Función para obtener parámetros de la URL
+// Función para obtener parámetros de la URL (clave para los QR de mesa)
 function getUrlParameter(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
     const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
@@ -57,16 +57,22 @@ async function loadMenuData() {
             currentMesa = parseInt(mesaParam);
             
             // 1. Mostrar la mesa actual
-            mesaInfoEl.style.display = 'block';
-            mesaInfoEl.textContent = `¡Estás pidiendo desde la MESA N° ${currentMesa}! Tu pedido es para comer en local.`;
+            if (mesaInfoEl) { // Agregamos una verificación de seguridad
+                mesaInfoEl.style.display = 'block';
+                mesaInfoEl.textContent = `¡Estás pidiendo desde la MESA N° ${currentMesa}! Tu pedido es para comer en local.`;
+            }
             
             // 2. Ocultar la opción de Delivery
-            orderOptionsEl.style.display = 'none';
+            if (orderOptionsEl) { // Agregamos una verificación de seguridad
+                orderOptionsEl.style.display = 'none';
+            }
             
         } else {
             // Si no hay mesa, se asume Delivery o Retiro, y se muestran las opciones
             currentMesa = null;
-            orderOptionsEl.style.display = 'flex'; 
+            if (orderOptionsEl) { // Agregamos una verificación de seguridad
+                orderOptionsEl.style.display = 'flex'; 
+            }
         }
         
         // 1. Inicializar el mapa de ítems y poblar la información del header
