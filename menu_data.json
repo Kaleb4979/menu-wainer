@@ -25,8 +25,8 @@
                 {"id": "Salchipapa ", "name": "Salchipapa ", "price": 5.00, "top_venta": false},
                 {"id": "Salchipapa ", "name": "Full", "price": 8.00, "top_venta": false},
                 {"id": "Salchipapa ", "name": "Extra Grande ", "price": 14.00, "top_venta": false},
-                {"id": "Cabimera ", "name": "Cabimera ", "price": 5.00, "top_venta": true}
-                {"id": "Cabimera ", "name": "Full ", "price": 14.00, "top_venta": true}
+                {"id": "Cabimera ", "name": "Cabimera ", "price": 5.00, "top_venta": true},
+                {"id": "Cabimera ", "name": "Full ", "price": 14.00, "top_venta": true},
                 {"id": "Cabimera ", "name": "Extra Grande ", "price": 15.00, "top_venta": true}
             ]
         },
