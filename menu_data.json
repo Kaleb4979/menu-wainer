@@ -93,7 +93,7 @@
                 {"id": "10 Mini Hamburguesas + Refresco litro y Medio", "name": "10 Mini Hamburguesas+Refresco litro y Medio", "price": 10.00, "top_venta": false},
                 {"id": "10 Tumbas Ranchos Tradicional + Refresco Litro y Medio", "name": "10 Tumbas Ranchos Tradicional", "price": 10.00, "top_venta": false},
                 {"id": "10 Perros Calientes ", "name": "10 Perros Calientes", "price": 10.00, "top_venta": true},
-                {"id": "4 WHOPPER Proteinas a preferencia + Servicio de Papa + Refresco Litro y Medio", "name": "Patacón Extra Full", "price": 15.00, "top_venta": false}
+                {"id": "4 WHOPPER Proteinas a preferencia + Servicio de Papa + Refresco Litro y Medio", "name": "4 WHOPPER Proteinas a preferencia + Servicio de Papa + Refresco Litro y Medio", "price": 15.00, "top_venta": false}
 
             ]
         },
