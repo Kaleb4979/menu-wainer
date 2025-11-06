@@ -19,6 +19,16 @@
             ]
         },
         {
+            "name": "🥖 Salchi Papas y Cabimeras! 💨",
+            "slogan": "ILo Mejor de La Ciudad.",
+            "items": [
+                {"id": "Salchipapa ", "name": "Salchipapa ", "price": 5.00, "top_venta": false},
+                {"id": "pan-huevo", "name": "Pan Huevo", "price": 1.00, "top_venta": false},
+                {"id": "pan-cebu", "name": "Pan Cebú", "price": 1.00, "top_venta": false},
+                {"id": "pan-salchiqueso", "name": "Pan Salchiqueso", "price": 1.50, "top_venta": true}
+            ]
+        },
+        {
             "name": "🌾 Pan Granjero: El Gigante de la Ciudad 💪",
             "slogan": "Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.",
             "items": [
@@ -83,4 +93,5 @@
             ]
         }
     ]
+
 }
