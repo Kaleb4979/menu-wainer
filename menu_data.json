@@ -5,7 +5,7 @@
         "origin_lat": 10.660805,
         "origin_lon": -71.599221,
         "schedule": "Miércoles a Domingo de 6:00 PM a 12:00 AM",
-        "promo": "¡ESTAMOS RECIBIENDO A 280BS X DOLAR!"
+        "promo": "¡!"
     },
     "categories": [
         {
@@ -87,7 +87,7 @@
             ]
         },
                 {
-            "name": "🌿 COMBOS POPULARES 10",
+            "name": "🍔🥤 COMBOS POPULARES 10",
             "slogan": "Los Mejores Combos de La Ciudad.",
             "items": [
                 {"id": "10 Mini Hamburguesas + Refresco litro y Medio", "name": "10 Mini Hamburguesas+Refresco litro y Medio", "price": 10.00, "top_venta": false},
@@ -110,4 +110,3 @@
     ]
 
 }
-
