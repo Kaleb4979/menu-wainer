@@ -86,6 +86,16 @@
                 {"id": "pata-full", "name": "Patacón Extra Full", "price": 9.00, "top_venta": false}
             ]
         },
+                {
+            "name": "🌿 COMBOS POPULARES 10",
+            "slogan": "Los Mejores Combos de La Ciudad.",
+            "items": [
+                {"id": "10 Mini Hamburguesas+Refresco litro y Medio", "name": "10 Mini Hamburguesas+Refresco litro y Medio", "price": 10.00, "top_venta": false},
+                {"id": "pata-papa", "name": "Patacón y Papa", "price": 5.00, "top_venta": false},
+                {"id": "pata-especial", "name": "Patacón Especial", "price": 6.00, "top_venta": true},
+                {"id": "pata-full", "name": "Patacón Extra Full", "price": 9.00, "top_venta": false}
+            ]
+        },
         {
             "name": "➕ Complementos",
             "slogan": "Añade un extra de sabor a tu pedido.",
