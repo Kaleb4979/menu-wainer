@@ -91,7 +91,9 @@
             "slogan": "Añade un extra de sabor a tu pedido.",
             "items": [
                 {"id": "comp-yoyos", "name": "Yoyos", "price": 3.50, "top_venta": false},
-                {"id": "comp-papas", "name": "Servicio de Papas", "price": 2.50, "top_venta": false}
+                {"id": "comp-papas", "name": "Servicio de Papas", "price": 2.50, "top_venta": false},
+                {"id": "Refresco de Vaso", "name": "Refresco de Vaso", "price": 0.50, "top_venta": false},
+                {"id": "Refresco Litro y Medio", "name": "Refresco Litro y Medio", "price": 2.50, "top_venta": false}
             ]
         }
     ]
