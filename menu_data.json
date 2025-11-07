@@ -106,9 +106,14 @@
                 {"id": "refresco-vaso", "name": "Refresco de Vaso", "price": 0.50, "top_venta": false},
                 {"id": "refresco-litro-medio", "name": "Refresco Litro y Medio", "price": 2.50, "top_venta": false}
             ]
+        },
+        {
+            "name": "🎬 VIDEO PROMOCIONALES",
+            "slogan": "Mira nuestros combos, detrás de cámaras y más.",
+            "items": [
+                {"id": "link-videos", "name": "Ver Videos", "price": 0.00, "top_venta": false}
+            ]
         }
     ]
 
 }
-
-
