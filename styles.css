@@ -15,7 +15,7 @@ body {
     background-color: var(--color-wainer-dark);
     color: var(--color-wainer-light);
     line-height: 1.6;
-    padding-bottom: 120px; /* Aumentado para dar espacio al carrito flotante */
+    padding-bottom: 120px; /* Base para el espacio del carrito flotante */
 }
 
 .hero {
@@ -113,7 +113,6 @@ body {
 
 /* ================================================= */
 /* === ESTILOS PARA HACER LA CATEGORÍA DE VIDEOS MÁS COMPACTA === */
-/* Utilizamos :first-child porque la categoría de videos es la primera */
 /* ================================================= */
 
 .menu-category:first-child {
@@ -379,7 +378,7 @@ body {
     right: 0;
     background-color: var(--color-whatsapp-green);
     color: white;
-    padding: 15px;
+    padding: 15px; /* Base padding */
     text-align: center;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
     z-index: 1000;
@@ -392,7 +391,7 @@ body {
     background-color: var(--color-wainer-dark);
     color: var(--color-wainer-gold);
     border: none;
-    padding: 10px 20px;
+    padding: 10px 20px; /* Base padding */
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
@@ -651,3 +650,59 @@ footer { display: none; }
 }
 
 /* --- FIN ESTILOS DE PUBLICIDAD --- */
+
+
+/* ================================================= */
+/* === AJUSTES DE OPTIMIZACIÓN MÓVIL (Media Query) === */
+/* Se aplica a pantallas más estrechas que 550px */
+/* ================================================= */
+
+@media (max-width: 550px) {
+    /* 1. Reducir el relleno (padding) de toda la barra flotante */
+    .cart-float {
+        padding: 8px; /* Reducir de 15px a 8px */
+        /* Aseguramos que los ítems estén siempre en el centro para ahorrar espacio */
+        align-items: center; 
+    }
+    
+    /* 2. Compactar la sección de Total y evitar que el texto sea demasiado grande */
+    .cart-float .cart-total {
+        font-size: 1.1em; /* Más pequeño */
+        flex-shrink: 1; 
+        gap: 5px; /* Reducir el gap */
+    }
+
+    /* 2b. Ajustes finos al texto de Total/VES para que no estorbe */
+    .cart-float .cart-total > div {
+        margin-left: 0;
+    }
+    .conversion-box {
+        font-size: 0.6em;
+    }
+
+    /* 3. Reducir el tamaño de fuente y padding del botón de WhatsApp */
+    .cart-float button {
+        padding: 6px 10px; /* Reducción agresiva del padding vertical */
+        font-size: 0.9em; /* Más pequeño */
+        min-width: 100px;
+        white-space: nowrap; /* CRÍTICO: Evita que el texto envuelva y estire el botón */
+    }
+
+    /* 4. Asegurar que el botón de videos sea compacto */
+    #back-to-menu-btn {
+        font-size: 1em;
+        padding: 8px 15px;
+    }
+    
+    /* 5. Ajustar el tamaño de fuente general del menú para móviles */
+    .menu-item {
+        font-size: 1em;
+    }
+    .item-title {
+        font-size: 1.1em;
+    }
+    /* 6. Asegurar que el padding del cuerpo es el adecuado para la nueva barra */
+    body {
+        padding-bottom: 80px; /* Reducir el espacio inferior (antes 120px) para el espacio compactado de la barra */
+    }
+}
