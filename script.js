@@ -192,6 +192,7 @@ function calculateDeliveryFee(callback) {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                // RUTA DE ÉXITO
                 const clientLat = position.coords.latitude;
                 const clientLon = position.coords.longitude;
                 
@@ -210,30 +211,36 @@ function calculateDeliveryFee(callback) {
                 updateCartDisplay(); // Forzar actualización del total
             },
             (error) => {
-                // ESTA PARTE ES LA CLAVE: Manejo de errores más claro para el usuario.
+                // RUTA DE ERROR
                 console.error('Error de geolocalización:', error);
                 
                 let errorMessage = 'Error: No se pudo obtener la ubicación.';
                 if (error.code === 1) {
-                    errorMessage = 'Permiso denegado. Active la ubicación para calcular el delivery.';
+                    errorMessage = 'PERMISO DENEGADO. Por favor, revisa el icono del candado en la URL y recarga.';
                 } else if (error.code === 2) {
-                    errorMessage = 'Ubicación no disponible (GPS/WiFi apagado).';
+                    errorMessage = 'Ubicación no disponible. ¿Están encendidos el GPS/Servicios de Ubicación?';
                 } else if (error.code === 3) {
-                    errorMessage = 'La búsqueda de ubicación ha tardado demasiado.';
+                    errorMessage = 'Tiempo de espera agotado. Mala conexión o señal GPS débil.';
+                }
+                // Adicional: En caso de que el error.code sea nulo o indefinido:
+                if (!error.code && error.message) {
+                    errorMessage = `Error interno: ${error.message}`;
                 }
 
-                // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
+
+                // Fallo: usar 0 costo y no marcar como calculado para intentarlo de nuevo
                 deliveryFee = 0;
                 deliveryCalculated = false; 
 
                 loadingMessage.textContent = `❌ ${errorMessage} Costo de Delivery: 0.00$`;
                 loadingMessage.style.display = 'block';
                 
-                // Revertir el estado visual para permitir el pedido manual
+                // Asegurar que el botón de checkout se rehabilita con el mensaje de advertencia
                 setTimeout(() => {
                     loadingMessage.style.display = 'none';
-                    checkoutBtn.disabled = totalItems === 0;
-                    checkoutBtn.textContent = `Hacer Pedido (${calculateSubtotal()} ítems) - Subtotal: ${calculateSubtotal().toFixed(2)}$`;
+                    // Rehabilita el botón si hay items en el carrito
+                    checkoutBtn.disabled = calculateSubtotal() === 0; 
+                    updateCartDisplay(); // Forzar actualización del total y del botón
                 }, 5000); 
                 
                 if (callback) callback(0, 0, 0, 0); 
@@ -248,6 +255,7 @@ function calculateDeliveryFee(callback) {
             // >>> FIN OPCIONES AÑADIDAS <<<
         );
     } else {
+        // RUTA DE NAVEGADOR SIN SOPORTE
         console.error('Geolocalización no soportada.');
         
         deliveryFee = 0;
@@ -256,14 +264,13 @@ function calculateDeliveryFee(callback) {
         loadingMessage.textContent = 'Geolocalización no soportada por su dispositivo.';
         loadingMessage.style.display = 'block';
         
-        // Revertir el estado visual
         setTimeout(() => {
             loadingMessage.style.display = 'none';
             checkoutBtn.disabled = false;
         }, 5000);
 
         if (callback) callback(0, 0, 0, 0); 
-        updateCartDisplay(); // Forzar actualización del total con el error
+        updateCartDisplay();
     }
 }
 
@@ -521,7 +528,7 @@ function updateCartDisplay() {
             
         } else {
              // Dejar que la función calculateDeliveryFee maneje el mensaje de carga o error
-             if (loadingMessage.style.display !== 'block') { // Si no está mostrando el mensaje de carga/error
+             if (loadingMessage.style.display !== 'block') { // Si no está mostrando el mensaje de carga o error
                 deliveryDetails.textContent = "Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)";
              }
              
@@ -582,11 +589,9 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
-    // ===============================================
     // *** CORRECCIÓN APLICADA AQUÍ ***
-    // Se utiliza el formato oficial de Google Maps para una URL que funcione
-    // ===============================================
-    const mapsUrl = (lat && lon) ? `https://maps.google.com/?q=${lat},${lon}` : "N/A";
+    // Formato de URL de Google Maps para que sea funcional en WhatsApp
+    const mapsUrl = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
         message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
@@ -623,7 +628,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
     // ----------------------------------------------------
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
-    const mapsUrlForLog = (lat && lon) ? `https://maps.google.com/?q=${lat},${lon}` : "N/A";
+    const mapsUrlForLog = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
 
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
