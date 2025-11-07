@@ -34,11 +34,15 @@
                 <label for="delivery-checkbox">
                     🚚 ¿Desea Delivery?
                 </label>
-                <input type="checkbox" id="delivery-checkbox" onchange="updateCartDisplay()">
+                <input type="checkbox" id="delivery-checkbox" onchange="handleDeliveryToggle()">
             </div>
             <div id="delivery-details" class="delivery-info">
                 Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)
             </div>
+        </div>
+        
+        <div id="search-container" class="search-container">
+            <input type="text" id="search-input" placeholder="🔍 Buscar tu plato favorito (Ej: Whopper, Papas, Pollo)">
         </div>
         
         <div id="loading-location" class="loading-message" style="display:none;">
@@ -56,11 +60,17 @@
     
     <div class="cart-float">
         <div class="cart-total">
-            🛒 Total: <span id="cart-total-price">0.00</span>$
+            🛒 <span id="cart-item-count" class="cart-item-badge">0</span> Total: <span id="cart-total-price">0.00</span>$
         </div>
-        <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
-            Hacer Pedido por WhatsApp
-        </button>
+        <div id="checkout-status-container" style="position:relative; flex-grow: 1;">
+            <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
+                Hacer Pedido por WhatsApp
+            </button>
+            <div id="cooldown-bar" class="cooldown-progress-bar" style="display:none;">
+                <div id="cooldown-fill" class="cooldown-fill"></div>
+                <span id="cooldown-text" class="cooldown-text"></span>
+            </div>
+        </div>
     </div>
 
     <footer>
@@ -70,4 +80,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
