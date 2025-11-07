@@ -1,0 +1,112 @@
+{
+    "info": {
+        "whatsapp_number": "584246789719",
+        "cooldown_seconds": 45,
+        "origin_lat": 10.660805,
+        "origin_lon": -71.599221,
+        "schedule": "Miércoles a Domingo de 6:00 PM a 12:00 AM",
+        "promo": "¡!"
+    },
+    "categories": [
+        {
+            "name": "🥖 Panes: ¡El Clásico Rápido! 💨",
+            "slogan": "Ideales para una merienda rápida o un desayuno express.",
+            "items": [
+                {"id": "pan-salchicha", "name": "Pan Salchicha", "price": 1.00, "top_venta": false},
+                {"id": "pan-huevo", "name": "Pan Huevo", "price": 1.00, "top_venta": false},
+                {"id": "pan-cebu", "name": "Pan Cebú", "price": 1.00, "top_venta": false},
+                {"id": "pan-salchiqueso", "name": "Pan Salchiqueso", "price": 1.50, "top_venta": true}
+            ]
+        },
+        {
+            "name": "🍟 Salchi Papas y Cabimeras! 💨",
+            "slogan": "ILo Mejor de La Ciudad.",
+            "items": [
+                {"id": "salchipapa-normal", "name": "Salchipapa", "price": 5.00, "top_venta": false},
+                {"id": "salchipapa-full", "name": "Salchipapa Full", "price": 8.00, "top_venta": false},
+                {"id": "salchipapa-extra-grande", "name": "Salchipapa Extra Grande", "price": 14.00, "top_venta": false},
+                {"id": "cabimera-normal", "name": "Cabimera", "price": 5.00, "top_venta": false},
+                {"id": "cabimera-full", "name": "Cabimera Full", "price": 14.00, "top_venta": false},
+                {"id": "cabimera-extra-grande", "name": "Cabimera Extra Grande", "price": 15.00, "top_venta": true}
+            ]
+        },
+        {
+            "name": "🌾 Pan Granjero: El Gigante de la Ciudad 💪",
+            "slogan": "Un pan grande y completo con tu proteína favorita, siempre acompañado del mejor Cebú.",
+            "items": [
+                {"id": "gran-carne", "name": "Granjero Carne y Cebú", "price": 3.50, "top_venta": true},
+                {"id": "gran-pollo", "name": "Granjero Pollo y Cebú", "price": 3.50, "top_venta": false},
+                {"id": "gran-lomonegro", "name": "Granjero Lomo Negro y Cebú", "price": 3.50, "top_venta": false},
+                {"id": "gran-lomito", "name": "Granjero Lomito y Cebú", "price": 3.50, "top_venta": false},
+                {"id": "gran-pernil", "name": "Granjero Pernil y Cebú", "price": 3.50, "top_venta": false},
+                {"id": "gran-chuleta", "name": "Granjero Chuleta y Cebú", "price": 3.50, "top_venta": false}
+            ]
+        },
+        {
+            "name": "🫓 Arepas o Tumbarranchos: ¡Sabor Zuliano! 🇻🇪",
+            "slogan": "La tradición que enamora. Rellenos que te harán sentir en casa.",
+            "items": [
+                {"id": "arepa-tradicional", "name": "Arepa Tradicional (2x)", "price": 1.50, "top_venta": false},
+                {"id": "arepa-carne", "name": "Arepa Carne", "price": 3.50, "top_venta": false},
+                {"id": "arepa-pollo", "name": "Arepa Pollo", "price": 3.50, "top_venta": false},
+                {"id": "arepa-lomito", "name": "Arepa Lomito", "price": 3.50, "top_venta": false},
+                {"id": "arepa-chuleta", "name": "Arepa Chuleta", "price": 3.50, "top_venta": false}
+            ]
+        },
+        {
+            "name": "🍟 Hamburguesas: ¡Poder Wainer!",
+            "slogan": "Elige la experiencia Wainer que se adapte a tu hambre. Calidad inigualable.",
+            "items": [
+                {"id": "hamb-mini", "name": "Mini de Carne", "price": 1.00, "top_venta": false},
+                {"id": "hamb-pollo", "name": "Hamburguesa Pollo", "price": 1.50, "top_venta": false},
+                {
+                    "id": "hamb-whopper", 
+                    "name": "Whopper", 
+                    "price": 3.50, 
+                    "top_venta": false,
+                    "options": [
+                        {"label": "Con Todo (Salsas, Veg.)", "value": "Con Todo", "checked": true},
+                        {"label": "Poca Salsa", "value": "Poca Salsa"},
+                        {"label": "Sin Salsa", "value": "Sin Salsa"},
+                        {"label": "Sin Cebolla", "value": "Sin Cebolla"},
+                        {"label": "Sin Tomate", "value": "Sin Tomate"}
+                    ]
+                },
+                {"id": "hamb-combo", "name": "Whopper y Papas (Combo)", "price": 5.00, "top_venta": true},
+                {"id": "hamb-full", "name": "Whopper Extra Full", "price": 8.00, "top_venta": false}
+            ]
+        },
+        {
+            "name": "🌿 Patacones: Crujientes y Rellenos",
+            "slogan": "La base perfecta para los mejores rellenos. Nuestro favorito.",
+            "items": [
+                {"id": "pata-normal", "name": "Patacón Normal", "price": 3.50, "top_venta": false},
+                {"id": "pata-papa", "name": "Patacón y Papa", "price": 5.00, "top_venta": false},
+                {"id": "pata-especial", "name": "Patacón Especial", "price": 6.00, "top_venta": true},
+                {"id": "pata-full", "name": "Patacón Extra Full", "price": 9.00, "top_venta": false}
+            ]
+        },
+        {
+            "name": "🍔🥤 COMBOS POPULARES 10",
+            "slogan": "Los Mejores Combos de La Ciudad.",
+            "items": [
+                {"id": "combo-mini-hamb", "name": "10 Mini Hamburguesas+Refresco litro y Medio", "price": 10.00, "top_venta": false},
+                {"id": "combo-tumbarranchos", "name": "10 Tumbas Ranchos Tradicional", "price": 10.00, "top_venta": false},
+                {"id": "combo-perros", "name": "10 Perros Calientes", "price": 10.00, "top_venta": true},
+                {"id": "combo-whopper-full", "name": "4 WHOPPER Proteinas a preferencia + Servicio de Papa + Refresco Litro y Medio", "price": 15.00, "top_venta": false}
+
+            ]
+        },
+        {
+            "name": "➕ Complementos",
+            "slogan": "Añade un extra de sabor a tu pedido.",
+            "items": [
+                {"id": "comp-yoyos", "name": "Yoyos", "price": 3.50, "top_venta": false},
+                {"id": "comp-papas", "name": "Servicio de Papas", "price": 2.50, "top_venta": false},
+                {"id": "refresco-vaso", "name": "Refresco de Vaso", "price": 0.50, "top_venta": false},
+                {"id": "refresco-litro-medio", "name": "Refresco Litro y Medio", "price": 2.50, "top_venta": false}
+            ]
+        }
+    ]
+
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pa que Wainer - Menú y Pedidos</title>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="hero">
+        <img src="https://imgur.com/gee4RDj.jpg" alt="Logo Pa que Wainer" class="logo">
+        <h1>LA MEJOR CALIDAD EN COMIDA RÁPIDA</h1>
+        
+        <div id="promo-container" class="promo-tag"></div>
+        <p id="schedule-container" class="schedule"></p>
+    </header>
+
+    <main class="menu-container">
+        
+        <div id="mesa-info" style="
+            background-color: var(--color-wainer-gold); 
+            color: var(--color-wainer-dark); 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            text-align: center;
+            font-weight: bold;
+            display: none;">
+        </div>
+
+        <div class="order-options">
+            <div class="delivery-toggle">
+                <label for="delivery-checkbox">
+                    🚚 ¿Desea Delivery?
+                </label>
+                <input type="checkbox" id="delivery-checkbox" onchange="handleDeliveryToggle()">
+            </div>
+            <div id="delivery-details" class="delivery-info">
+                Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)
+            </div>
+        </div>
+        
+        <div id="search-container" class="search-container">
+            <input type="text" id="search-input" placeholder="🔍 Buscar tu plato favorito (Ej: Whopper, Papas, Pollo)">
+        </div>
+        
+        <div id="loading-location" class="loading-message" style="display:none;">
+            Obteniendo tu ubicación para calcular el costo... Por favor, acepta el permiso.
+        </div>
+        
+        <div id="cart-items-container" class="cart-details-container" style="display:none;">
+            </div>
+        
+        <div id="menu-content-container">
+            <p>Cargando menú...</p>
+        </div>
+
+    </main>
+    
+    <div class="cart-float">
+        <div class="cart-total">
+            🛒 <span id="cart-item-count" class="cart-item-badge">0</span> Total: <span id="cart-total-price">0.00</span>$
+        </div>
+        <div id="checkout-status-container" style="position:relative; flex-grow: 1;">
+            <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
+                Hacer Pedido por WhatsApp
+            </button>
+            <div id="cooldown-bar" class="cooldown-progress-bar" style="display:none;">
+                <div id="cooldown-fill" class="cooldown-fill"></div>
+                <span id="cooldown-text" class="cooldown-text"></span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 Pa que Wainer. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
