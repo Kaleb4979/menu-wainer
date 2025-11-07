@@ -212,6 +212,17 @@ function calculateDeliveryFee(callback) {
             (error) => {
                 console.error('Error de geolocalización:', error);
                 
+                let userAlertMessage = 'No se pudo calcular el costo de envío (GPS/Ubicación inaccesible). El costo se calculará a la entrega.';
+                
+                // Error Code 1 is Permission Denied (El más común)
+                if (error.code === 1) {
+                    userAlertMessage = '⚠️ ¡Permiso de Ubicación Denegado! ⚠️\n\nTu navegador bloqueó el acceso a tu ubicación. Para calcular el costo de delivery automáticamente, debes permitir la localización y volver a seleccionar "Desea Delivery?".\n\nSi continúas, el costo de delivery se calculará a la entrega.';
+                } else if (error.code === 2 || error.code === 3) {
+                    userAlertMessage = '⚠️ No se pudo obtener tu ubicación (Señal débil o GPS lento). Si continúas, el costo de delivery se calculará a la entrega.';
+                }
+
+                alert(userAlertMessage);
+                
                 // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
                 deliveryFee = 0;
                 deliveryCalculated = false; 
