@@ -18,6 +18,31 @@ const RATE_ENDPOINT = ENDPOINT_URL;
 
 // --- Funciones de Utilidad ---
 
+// --- Lógica para cambiar entre Menú y Videos ---
+function showVideos() {
+    document.getElementById('videos-section').style.display = 'block';
+    document.getElementById('menu-main-content').style.display = 'none';
+    
+    // Ocultar la barra flotante del carrito mientras se ven los videos
+    document.querySelector('.cart-float').style.display = 'none'; 
+    
+    // Desplazarse al inicio de la página
+    window.scrollTo(0, 0); 
+}
+
+function showMenuContent() {
+    document.getElementById('videos-section').style.display = 'none';
+    document.getElementById('menu-main-content').style.display = 'block';
+    
+    // Mostrar la barra flotante del carrito
+    document.querySelector('.cart-float').style.display = 'flex'; 
+    
+    // Desplazarse al inicio de la página
+    window.scrollTo(0, 0); 
+}
+// ---------------------------------------------
+
+
 function convertToVES(usdAmount) {
     // Si la tasa no se ha cargado (ej: fallo de red), usa 0 para evitar errores
     if (!MENU_DATA || !MENU_DATA.info.exchange_rate || isNaN(MENU_DATA.info.exchange_rate)) return 0;
@@ -291,7 +316,7 @@ async function loadMenuData() {
         // 1. OBTENER TASA DE CAMBIO DESDE EL EXCEL (APPS SCRIPT)
         let rate = 0;
         try {
-            // AÑADIR TIMESTAMP PARA EVITAR CACHÉ DEL NAVEGADOR (CORRECCIÓN DE CORS)
+            // AÑADIR TIMESTAMP PARA EVITAR CACHÉ DEL NAVEGADOR
             const nocacheUrl = RATE_ENDPOINT + '?v=' + new Date().getTime(); 
             
             const rateResponse = await fetch(nocacheUrl); 
@@ -356,6 +381,22 @@ async function loadMenuData() {
                 const topVentaTag = item.top_venta ? '<span class="top-venta-tag">⭐ TOP VENTA</span>' : '';
                 const isComplex = item.options && item.options.length > 0;
                 
+                // >>> LÓGICA ESPECIAL PARA EL ENLACE DE VIDEOS <<<
+                if (item.id === 'link-videos') {
+                     menuHtml += `
+                        <div class="menu-item link-item" onclick="showVideos()">
+                            <span class="item-info" style="color: var(--color-wainer-gold); font-weight: bold; font-size: 1.2em;">
+                                ${item.name} 🎬
+                            </span>
+                            <div class="item-controls">
+                                <span class="price" style="background: none; padding: 0;">¡Ver ahora!</span>
+                            </div>
+                        </div>
+                    `;
+                    return; // Pasa al siguiente ítem sin aplicar la lógica normal
+                }
+                // >>> FIN: LÓGICA ESPECIAL PARA EL ENLACE DE VIDEOS <<<
+
                 if (isComplex) {
                     let optionsHTML = '';
                     let placeholderText = 'Instrucciones Especiales: (Ej: Poco queso, sin lechuga)';
@@ -448,7 +489,10 @@ function updateCartDisplay() {
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
         const quantityElement = itemEl.querySelector('.item-quantity');
-        quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
+        // Solo actualiza la cantidad si es un ítem simple y no el link de videos
+        if (itemId !== 'link-videos') {
+            quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
+        }
     });
     
     document.getElementById('cart-item-count').textContent = totalItems;
@@ -631,7 +675,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
             message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación. El costo de delivery se calculará a la entrega.\n`;
             message += `\n*TOTAL A PAGAR (Comida - USD):* ${subtotal.toFixed(2)}$\n`;
-            message += `*TOTAL ESTIMADO (VES):* ${totalVES.toFixed(2)} VES\n`;
+            *`TOTAL ESTIMADO (VES):* ${totalVES.toFixed(2)} VES\n`;
         }
     } else {
         message += `✅ *SERVICIO:* RETIRO EN TIENDA 🚶\n`;
