@@ -6,16 +6,23 @@ let ALL_ITEMS_MAP = {};
 let cart = {}; 
 let currentMesa = null; 
 let deliveryFee = 0;
-let deliveryCalculated = false; // Flag: ¿Se logró calcular el costo de delivery con éxito?
-let userLocation = { lat: 0, lon: 0, distanceKm: 0 }; // Almacena la última ubicación exitosa
+let deliveryCalculated = false; 
+let userLocation = { lat: 0, lon: 0, distanceKm: 0 }; 
 
 // >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<
-const LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp2udcJbugOI995I80QI18eME0tJ-BMlUOq2xqEuAT_6n2Gijnn/exec'; 
+const LOG_ENDPOINT = 'PEGAR_AQUÍ_TU_URL_DE_PEDIDOS_(doPost)'; 
+// >>> URL PARA OBTENER LA TASA DE CAMBIO DESDE EL EXCEL (doGet) <<<
+const RATE_ENDPOINT = 'PEGAR_AQUÍ_TU_URL_DE_TASA_ACTUALIZADA'; 
 // =================================================================
 
 // --- Funciones de Utilidad ---
 
-// --- LÓGICA DE BÚSQUEDA ---
+function convertToVES(usdAmount) {
+    // Si la tasa no se ha cargado (ej: fallo de red), usa 0 para evitar errores
+    if (!MENU_DATA || !MENU_DATA.info.exchange_rate || isNaN(MENU_DATA.info.exchange_rate)) return 0;
+    return usdAmount * MENU_DATA.info.exchange_rate;
+}
+
 function filterMenu() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
     const categories = document.querySelectorAll('.menu-category');
@@ -45,7 +52,6 @@ function filterMenu() {
         }
     });
 }
-// ------------------------------------
 
 function getUrlParameter(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -270,8 +276,6 @@ function handleDeliveryToggle() {
     }
 }
 
-// ------------------------------------
-
 function calculateSubtotal() {
     let subtotal = 0;
     for (const uniqueId in cart) {
@@ -283,11 +287,30 @@ function calculateSubtotal() {
 // --- Función principal para cargar el menú y Renderizar ---
 async function loadMenuData() {
     try {
+        // 1. OBTENER TASA DE CAMBIO DESDE EL EXCEL (APPS SCRIPT)
+        let rate = 0;
+        try {
+            const rateResponse = await fetch(RATE_ENDPOINT);
+            const rateData = await rateResponse.json();
+            rate = parseFloat(rateData.exchange_rate);
+            if (isNaN(rate) || rate <= 0) {
+                 rate = 290.00; // Tasa de emergencia o default
+                 console.warn("La tasa de cambio obtenida del servidor no es válida. Usando 290.00 como default.");
+            }
+        } catch (rateError) {
+             rate = 290.00; // Tasa de emergencia si la API falla
+             console.error("Error al obtener la tasa de cambio del Apps Script. Usando 290.00 como default.", rateError);
+        }
+        
+        // 2. OBTENER DATOS PRINCIPALES DEL MENÚ
         const response = await fetch('menu_data.json');
         if (!response.ok) {
             throw new Error('No se pudo cargar menu_data.json');
         }
         const data = await response.json();
+        
+        // Asignar la tasa obtenida al objeto MENU_DATA
+        data.info.exchange_rate = rate; 
         MENU_DATA = data;
         
         // LÓGICA DE MESA
@@ -386,7 +409,6 @@ async function loadMenuData() {
 
         document.getElementById('menu-content-container').innerHTML = menuHtml;
         
-        // Add search listener
         document.getElementById('search-input').addEventListener('input', filterMenu);
         
         updateCartDisplay();
@@ -468,6 +490,27 @@ function updateCartDisplay() {
     
     document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
     
+    // >>> LÓGICA DE CONVERSIÓN VES DINÁMICA <<<
+    const totalVES = convertToVES(currentTotal);
+    const rate = MENU_DATA.info.exchange_rate;
+    
+    const conversionContainer = document.getElementById('conversion-container');
+
+    if (totalItems > 0) {
+        const conversionHtml = `
+            <span class="conversion-rate">Tasa: ${rate.toFixed(2)} VES/USD</span>
+            <span class="conversion-ves">Total en BS: ${totalVES.toFixed(2)} VES</span>
+        `;
+        conversionContainer.innerHTML = conversionHtml;
+        conversionContainer.style.display = 'flex';
+    } else {
+        conversionContainer.innerHTML = '';
+        conversionContainer.style.display = 'none';
+    }
+    // >>> FIN LÓGICA DE CONVERSIÓN <<<
+
+    // LÓGICA DE BOTÓN Y MENSAJES DE MESA/DELIVERY
+    
     if (currentMesa) {
         deliveryDetails.textContent = "";
         loadingMessage.style.display = 'none';
@@ -477,7 +520,6 @@ function updateCartDisplay() {
     } else if (isDelivery) {
         
         if (deliveryCalculated) {
-            // Si el cálculo fue exitoso, muestra el costo final
             loadingMessage.style.display = 'none'; 
             currentTotal += deliveryFee;
             deliveryDetails.textContent = `✅ Costo de Delivery calculado: ${deliveryFee.toFixed(2)}$ (a ${userLocation.distanceKm.toFixed(2)} km)`;
@@ -488,7 +530,6 @@ function updateCartDisplay() {
             }
             
         } else {
-             // Si el cálculo falló o está pendiente, muestra el subtotal
              if (loadingMessage.style.display !== 'block') { 
                 deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación. (1$ por km, mínimo 1$)";
              }
@@ -557,13 +598,17 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
+    // LÓGICA DE TOTAL Y CONVERSIÓN VES PARA EL MENSAJE
+    const totalVES = convertToVES(finalTotal);
+    
     // Formato de URL de Google Maps (funcional para log y mensaje)
     const mapsUrl = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
         message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
         message += `✅ *SERVICIO:* COMER EN LOCAL 🍽️\n`;
-        message += `💰 *TOTAL A PAGAR:* ${subtotal.toFixed(2)}$\n`;
+        message += `💰 *TOTAL A PAGAR (USD):* ${subtotal.toFixed(2)}$\n`;
+        message += `💰 *TOTAL A PAGAR (VES):* ${totalVES.toFixed(2)} VES\n`;
         
     } else if (isDelivery) {
         
@@ -574,20 +619,24 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             message += `📍 *DISTANCIA CALCULADA:* ${distanceKm.toFixed(2)} km\n`;
             message += `💵 *COSTO DELIVERY:* ${deliveryCost.toFixed(2)}$ (1$/km, mínimo 1$)\n`;
             message += `\n*SUBTOTAL (Comida):* ${subtotal.toFixed(2)}$\n`;
-            message += `*TOTAL FINAL:* ${finalTotal.toFixed(2)}$\n`;
+            message += `*TOTAL FINAL (USD):* ${finalTotal.toFixed(2)}$\n`;
+            message += `*TOTAL FINAL (VES):* ${totalVES.toFixed(2)} VES\n`;
             message += `🗺️ *UBICACIÓN CLIENTE:* ${mapsUrl}\n`;
             
         } else {
             message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
             message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación. El costo de delivery se calculará a la entrega.\n`;
-            message += `\n*TOTAL A PAGAR (Comida):* ${subtotal.toFixed(2)}$\n`;
+            message += `\n*TOTAL A PAGAR (Comida - USD):* ${subtotal.toFixed(2)}$\n`;
+            message += `*TOTAL ESTIMADO (VES):* ${totalVES.toFixed(2)} VES\n`;
         }
     } else {
         message += `✅ *SERVICIO:* RETIRO EN TIENDA 🚶\n`;
-        message += `💰 *TOTAL A PAGAR:* ${subtotal.toFixed(2)}$\n`;
+        message += `💰 *TOTAL A PAGAR (USD):* ${subtotal.toFixed(2)}$\n`;
+        message += `💰 *TOTAL A PAGAR (VES):* ${totalVES.toFixed(2)} VES\n`;
     }
     
     message += "----------------------------------\n";
+    message += `Tasa VES/USD utilizada: ${MENU_DATA.info.exchange_rate.toFixed(2)}\n`;
     message += "\nPor favor, indique su nombre.";
     
     
