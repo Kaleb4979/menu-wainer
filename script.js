@@ -27,7 +27,9 @@ function filterMenu() {
         let itemFound = false;
 
         items.forEach(item => {
-            const itemName = item.querySelector('.item-title') ? item.querySelector('.item-title').textContent.toLowerCase() : item.querySelector('.item-info').textContent.toLowerCase();
+            // Asegura que busca el título del ítem, independientemente de si es simple o complejo
+            const itemTitleEl = item.querySelector('.item-title') || item.querySelector('.item-info');
+            const itemName = itemTitleEl ? itemTitleEl.textContent.toLowerCase() : '';
 
             if (itemName.includes(searchTerm) || searchTerm === '') {
                 item.classList.remove('hidden');
@@ -154,6 +156,7 @@ function addItemWithDetails(id, name, price, itemElement) {
 // 3. FUNCIÓN DE ELIMINACIÓN ÚNICA (desde el carrito detallado)
 function removeItemFromCart(uniqueId) {
     if (cart[uniqueId]) {
+        // Si el ítem es simple, eliminamos toda la cantidad, lo que en la práctica es igual a eliminarlo.
         delete cart[uniqueId];
     }
     updateCartDisplay();
@@ -438,24 +441,44 @@ function updateCartDisplay() {
         const quantityElement = itemEl.querySelector('.item-quantity');
         quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
     });
+    
+    // Actualiza el badge del contador de ítems
+    document.getElementById('cart-item-count').textContent = totalItems;
+    document.getElementById('cart-item-count').style.display = totalItems > 0 ? 'inline-block' : 'none';
+
 
     const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked; 
     
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
 
-    // Deshabilitación por Límite de tiempo
+    // Deshabilitación por Límite de tiempo (Barra de Cooldown)
     const lastOrderTime = localStorage.getItem('lastOrderTime');
     const now = Date.now();
     const COOLDOWN_SECS = MENU_DATA.info.cooldown_seconds;
     
+    const cooldownBar = document.getElementById('cooldown-bar');
+    const cooldownFill = document.getElementById('cooldown-fill');
+    const cooldownText = document.getElementById('cooldown-text');
+    
     if (lastOrderTime && (now - lastOrderTime) < (COOLDOWN_SECS * 1000)) {
         checkoutBtn.disabled = true;
-        const remainingSeconds = Math.ceil((COOLDOWN_SECS * 1000 - (now - lastOrderTime)) / 1000);
-        checkoutBtn.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
+        cooldownBar.style.display = 'flex'; // Mostrar la barra
+        checkoutBtn.style.visibility = 'hidden'; // Ocultar el botón base
+        
+        const elapsedSeconds = (now - lastOrderTime) / 1000;
+        const remainingSeconds = Math.ceil(COOLDOWN_SECS - elapsedSeconds);
+        const progressPercent = (elapsedSeconds / COOLDOWN_SECS) * 100;
+
+        cooldownFill.style.width = `${progressPercent}%`;
+        cooldownText.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
+        
     } else {
+        cooldownBar.style.display = 'none'; // Ocultar la barra
+        checkoutBtn.style.visibility = 'visible'; // Mostrar el botón base
         checkoutBtn.disabled = totalItems === 0;
     }
+
 
     let currentTotal = subtotal;
     
@@ -519,7 +542,8 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     message += "\n----------------------------------\n";
     
     // Corrected Google Maps URL using a standard format that works with coordinates
-    const mapsUrl = distanceKm > 0 ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
+    // Nota: El formato real para Google Maps es https://maps.google.com/maps?q=lat,lon
+    const mapsUrl = distanceKm > 0 ? `https://maps.google.com/maps?q=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
         message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
@@ -556,7 +580,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
     // ----------------------------------------------------
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
-    const mapsUrlForLog = distanceKm > 0 ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
+    const mapsUrlForLog = distanceKm > 0 ? `https://maps.google.com/maps?q=${lat},${lon}` : "N/A";
 
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
@@ -638,19 +662,16 @@ function checkAndSendOrder() {
     
     // Si es Delivery, usamos el cálculo previamente hecho o lo hacemos ahora.
     if (deliveryCalculated) {
-        const finalTotal = subtotal + deliveryFee;
-        // La información de lat/lon/dist se obtendrá de nuevo dentro de sendOrder si es necesario,
-        // pero por ahora solo pasamos el total y la tarifa.
-        // Lo más seguro es recalcular aquí para obtener los datos GPS frescos si la llamada a sendOrder los necesita.
         
         const checkoutBtn = document.getElementById('checkout-btn');
         checkoutBtn.disabled = true;
         checkoutBtn.textContent = 'Procesando pedido...';
         
+        // Recalculamos la ubicación final para tener lat/lon/dist exactos para el WhatsApp y el registro
         calculateDeliveryFee((fee, distanceKm, clientLat, clientLon) => {
              const final = subtotal + fee;
              sendOrder(subtotal, final, distanceKm, clientLat, clientLon);
-             checkoutBtn.disabled = false; // El botón se rehabilita al final de sendOrder
+             // El botón se rehabilita al final de sendOrder
         });
 
     } else {
