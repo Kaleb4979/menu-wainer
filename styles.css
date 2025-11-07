@@ -580,4 +580,22 @@ footer { display: none; }
     border-radius: 4px;
 }
 
+/* Estilo para el botón de regreso dentro de la sección de videos */
+#back-to-menu-btn {
+    margin-top: 30px;
+    padding: 10px 20px;
+    background-color: var(--color-wainer-red);
+    color: var(--color-wainer-light);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+#back-to-menu-btn:hover {
+    background-color: #900000;
+}
+
 /* --- FIN ESTILOS DE PUBLICIDAD --- */
