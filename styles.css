@@ -132,6 +132,23 @@ body {
     font-size: 1.1em;
 }
 
+/* ESTILO ESPECÍFICO PARA EL ENLACE DE VIDEOS */
+.menu-item.link-item {
+    /* Reducir el padding vertical para que sea más delgado */
+    padding: 5px 0; 
+    /* Darle un borde para que se vea como un botón */
+    border: 2px solid var(--color-wainer-gold);
+    border-radius: 5px;
+    margin: 10px 0;
+    background-color: #303030;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.menu-item.link-item:hover {
+    background-color: #444;
+}
+
 .item-controls {
     display: flex;
     align-items: center;
