@@ -113,6 +113,7 @@ body {
 
 /* ================================================= */
 /* === ESTILOS PARA HACER LA CATEGORÍA DE VIDEOS MÁS COMPACTA === */
+/* Utilizamos :first-child porque la categoría de videos es la primera */
 /* ================================================= */
 
 .menu-category:first-child {
@@ -650,53 +651,3 @@ footer { display: none; }
 }
 
 /* --- FIN ESTILOS DE PUBLICIDAD --- */
-
-
-/* ================================================= */
-/* === AJUSTES DE OPTIMIZACIÓN MÓVIL (Media Query) === */
-/* Se aplica a pantallas más estrechas que 550px */
-/* ================================================= */
-
-@media (max-width: 550px) {
-    /* 1. Reducir el relleno (padding) de toda la barra flotante */
-    .cart-float {
-        padding: 8px; /* Reducir de 15px a 8px */
-    }
-    
-    /* 2. Compactar la sección de Total y evitar que el texto sea demasiado grande */
-    .cart-float .cart-total {
-        font-size: 1.1em; /* Más pequeño */
-        flex-shrink: 1; 
-        gap: 5px; /* Reducir el gap */
-    }
-
-    /* 2b. Ajustes finos al texto de Total/VES para que no estorbe */
-    .cart-float .cart-total > div {
-        margin-left: 0;
-    }
-    .conversion-box {
-        font-size: 0.6em;
-    }
-    
-    /* 3. Reducir el tamaño de fuente y padding del botón de WhatsApp */
-    .cart-float button {
-        padding: 6px 10px; /* Reducción agresiva del padding vertical */
-        font-size: 0.9em; /* Más pequeño */
-        min-width: 100px;
-        white-space: nowrap; /* Evita que el texto envuelva y estire el botón */
-    }
-
-    /* 4. Asegurar que el botón de videos sea compacto */
-    #back-to-menu-btn {
-        font-size: 1em;
-        padding: 8px 15px;
-    }
-    
-    /* 5. Ajustar el tamaño de fuente general del menú para móviles */
-    .menu-item {
-        font-size: 1em;
-    }
-    .item-title {
-        font-size: 1.1em;
-    }
-}
