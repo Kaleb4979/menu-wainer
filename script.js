@@ -249,7 +249,7 @@ function calculateDeliveryFee(callback) {
                 loadingMessage.textContent = `❌ ${errorMessage} Costo de Delivery: 0.00$`;
                 loadingMessage.style.display = 'block';
                 
-                // Si la llamada viene de checkAndSendOrder, necesitamos notificar el fallo
+                // Si la llamada viene de showConfirmationModal, necesitamos notificar el fallo
                 if (callback) {
                     callback(0, 0, 0, 0); 
                 } else {
@@ -491,16 +491,13 @@ function updateCartDisplay() {
         const itemId = itemEl.getAttribute('data-id');
         const quantityElement = itemEl.querySelector('.item-quantity');
         
-        // *** CORRECCIÓN CRÍTICA ***: Solo procede si el elemento de cantidad existe.
+        // *** CORRECCIÓN CRÍTICA (TypeError) ***: Solo procede si el elemento de cantidad existe.
         if (quantityElement) {
              quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
         }
-        // Si quantityElement es null (como en el link de videos), la ejecución continua sin error.
     });
     
     document.getElementById('cart-item-count').textContent = totalItems;
-    // La línea que causó el error en la llamada previa ya no existe en el traceback
-    // porque es la línea 494 de este archivo la que se ha corregido.
     document.getElementById('cart-item-count').style.display = totalItems > 0 ? 'inline-block' : 'none';
 
 
@@ -609,8 +606,14 @@ function updateCartDisplay() {
 }
 
 
-// --- Lógica de Envío Final (Envío a WhatsApp y Log) ---
+// --- LÓGICA DE REGISTRO Y ENVÍO FINAL (MODIFICADA) ---
 
+/**
+ * 1. Crea el mensaje de WhatsApp.
+ * 2. Prepara los datos para el Excel.
+ * 3. Abre la URL de WhatsApp (sin registrar aún).
+ * 4. Devuelve los datos de log.
+ */
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
     const isDelivery = !currentMesa && document.getElementById('delivery-checkbox').checked;
@@ -693,12 +696,10 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     message += "\nPor favor, indique su nombre.";
     
     
-    // ----------------------------------------------------
-    // LÓGICA DE REGISTRO EN GOOGLE SHEETS
-    // ----------------------------------------------------
+    // DATOS DE REGISTRO PARA EXCEL
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
     const mapsUrlForLog = (lat && lon) ? mapsUrl : "N/A";
-
+    
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
         hora: new Date().toLocaleTimeString('es-VE'),
@@ -708,7 +709,22 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         detalle_pedido: Object.values(consolidatedCart).map(item => `${item.quantity}x ${item.name}`).join('; '),
         ubicacion_url: mapsUrlForLog
     };
+    
+    // Abre la URL de WhatsApp y devuelve el objeto de registro
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${MENU_DATA.info.whatsapp_number}?text=${encodedMessage}`;
 
+    window.open(whatsappUrl, '_blank');
+    
+    // Devolvemos los datos que deben ser registrados
+    return logData;
+}
+
+/**
+ * Registra el pedido en el Excel (Google Sheet).
+ * Debe llamarse *después* de que el usuario haga clic en el botón Confirmar.
+ */
+function logOrderToSheet(logData) {
     fetch(LOG_ENDPOINT, {
         method: 'POST',
         mode: 'no-cors', 
@@ -721,27 +737,12 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         console.log("Datos de pedido enviados para registro.");
     })
     .catch(error => console.error('Error al intentar registrar el pedido:', error));
-    
-    // ----------------------------------------------------
-    // APERTURA DE WHATSAPP
-    // ----------------------------------------------------
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${MENU_DATA.info.whatsapp_number}?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, '_blank');
-    
-    localStorage.setItem('lastOrderTime', Date.now());
-
-    cart = {};
-    updateCartDisplay();
-    
-    // Restablece los mensajes de carga y botón después de enviar
-    document.getElementById('loading-location').style.display = 'none';
-    document.getElementById('checkout-btn').disabled = true;
 }
 
-function checkAndSendOrder() {
+
+// --- LÓGICA DE INICIO DE PEDIDO (MODIFICADA) ---
+
+function showConfirmationModal() {
     
     if (!MENU_DATA) {
          alert("Error: El menú no se ha cargado correctamente.");
@@ -763,9 +764,17 @@ function checkAndSendOrder() {
         return;
     }
 
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const loadingMessage = document.getElementById('loading-location');
+    
     // MESA (Opción A)
     if (currentMesa) {
-        sendOrder(subtotal, subtotal, 0, 0, 0);
+        const logData = sendOrder(subtotal, subtotal, 0, 0, 0);
+        logOrderToSheet(logData);
+        
+        localStorage.setItem('lastOrderTime', Date.now());
+        cart = {};
+        updateCartDisplay();
         return;
     }
     
@@ -773,14 +782,19 @@ function checkAndSendOrder() {
     const isDelivery = document.getElementById('delivery-checkbox').checked;
 
     if (!isDelivery) {
-        sendOrder(subtotal, subtotal, 0, 0, 0);
+        const confirmRetiro = confirm("¿Confirma su pedido de Retiro en Tienda por un total de " + subtotal.toFixed(2) + "$? El pedido se registrará al presionar ACEPTAR.");
+        if (confirmRetiro) {
+            const logData = sendOrder(subtotal, subtotal, 0, 0, 0);
+            logOrderToSheet(logData);
+            
+            localStorage.setItem('lastOrderTime', Date.now());
+            cart = {};
+            updateCartDisplay();
+        }
         return;
     }
     
     // DELIVERY (Opción C - Requiere Geolocalización Asíncrona)
-    
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const loadingMessage = document.getElementById('loading-location');
     
     // Bloquear UI y mostrar mensaje
     checkoutBtn.disabled = true;
@@ -792,10 +806,26 @@ function checkAndSendOrder() {
     calculateDeliveryFee((fee, distanceKm, clientLat, clientLon) => {
         
         const final = subtotal + fee;
-        sendOrder(subtotal, final, distanceKm, clientLat, clientLon);
         
-        // El botón se rehabilita al final de sendOrder (aunque el carrito se vacía)
+        const confirmDelivery = confirm("¿Confirma su pedido a domicilio por un TOTAL estimado de " + final.toFixed(2) + "$ (Incluye Delivery)? El pedido se registrará al presionar ACEPTAR y se abrirá WhatsApp.");
+        
+        if (confirmDelivery) {
+            const logData = sendOrder(subtotal, final, distanceKm, clientLat, clientLon);
+            logOrderToSheet(logData);
+            
+            localStorage.setItem('lastOrderTime', Date.now());
+            cart = {};
+        }
+        
+        // El botón y el display se actualizan al final
+        updateCartDisplay();
+        loadingMessage.style.display = 'none';
+        
     });
 }
+
+// CAMBIAR LA LLAMADA DEL BOTÓN EN INDEX.HTML A LA NUEVA FUNCIÓN
+// Esto ya lo hicimos en el HTML, pero es bueno recordarlo
+// <button onclick="showConfirmationModal()" id="checkout-btn" disabled>
 
 document.addEventListener('DOMContentLoaded', loadMenuData);
