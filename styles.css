@@ -331,6 +331,7 @@ body {
     font-weight: bold;
     font-size: 1.1em;
     transition: background-color 0.2s;
+    width: 100%; /* Asegura que el botón ocupe todo el espacio del contenedor */
 }
 
 .cart-float button:disabled {
@@ -347,6 +348,23 @@ body {
     gap: 5px;
     text-align: left;
 }
+
+/* Contador de ítems en el carrito flotante */
+.cart-item-badge {
+    background-color: var(--color-wainer-red);
+    color: var(--color-wainer-light);
+    font-size: 0.6em;
+    padding: 3px 6px;
+    border-radius: 50%;
+    position: relative;
+    top: -8px;
+    right: 5px;
+    font-weight: 900;
+    min-width: 15px;
+    text-align: center;
+    display: inline-block;
+}
+
 
 /* Sección de Opciones de Pedido (Delivery) */
 .order-options {
@@ -427,3 +445,40 @@ footer { display: none; }
 .menu-category.hidden, .menu-item-list.hidden, .menu-item.hidden, .menu-item-complex.hidden {
     display: none !important;
 }
+
+/* --- NUEVOS ESTILOS DE COOLDOWN PROGRESS BAR --- */
+.cooldown-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--color-wainer-dark); /* Color base del botón */
+    border: 2px solid var(--color-wainer-red);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cooldown-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background-color: var(--color-wainer-red);
+    transition: width 1s linear; /* Transición suave de la barra */
+    z-index: 10;
+}
+
+.cooldown-text {
+    position: relative;
+    z-index: 20;
+    color: var(--color-wainer-light); 
+    font-weight: bold;
+    font-size: 1.1em;
+    text-shadow: 0 0 3px var(--color-wainer-dark);
+}
+/* Fin de estilos de Cooldown */
