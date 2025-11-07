@@ -542,8 +542,8 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     message += "\n----------------------------------\n";
     
     // Corrected Google Maps URL using a standard format that works with coordinates
-    // Nota: El formato real para Google Maps es https://maps.google.com/maps?q=lat,lon
-    const mapsUrl = distanceKm > 0 ? `https://maps.google.com/maps?q=${lat},${lon}` : "N/A";
+    // Nota: El formato real para Google Maps es http://maps.google.com/?q=lat,lon
+    const mapsUrl = distanceKm > 0 ? `http://maps.google.com/?q=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
         message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
@@ -580,7 +580,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
     // ----------------------------------------------------
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
-    const mapsUrlForLog = distanceKm > 0 ? `https://maps.google.com/maps?q=${lat},${lon}` : "N/A";
+    const mapsUrlForLog = distanceKm > 0 ? `http://maps.google.com/?q=${lat},${lon}` : "N/A";
 
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
