@@ -22,7 +22,6 @@ function filterMenu() {
 
     categories.forEach(category => {
         const categoryName = category.querySelector('h2').textContent.toLowerCase();
-        // Buscamos en ambos tipos de contenedores por si acaso la clase "menu-item" aún está en uso en el HTML
         const items = category.querySelectorAll('.menu-item, .menu-item-complex'); 
         let categoryMatches = categoryName.includes(searchTerm);
         let itemFound = false;
@@ -79,21 +78,64 @@ function getDeliveryCost(distanceKm) {
     return Math.max(minCost, distanceKm * ratePerKm);
 }
 
-// --- LÓGICA DE CARRO: Solo MODO ÚNICO (Con Instrucciones) ---
 
-/**
- * Función central para añadir CUALQUIER ítem al carrito. 
- * Todos los ítems se añaden como elementos únicos (quantity=1) con sus detalles.
- * @param {string} id - El ID base del ítem (ej: 'pan-salchicha').
- * @param {string} name - El nombre base del ítem.
- * @param {number} price - El precio del ítem.
- * @param {HTMLElement} itemElement - El contenedor padre del ítem.
- * @param {boolean} isSimpleMode - Indica si es un ítem simple (sin opciones).
- */
+// --- LÓGICA DE CARRO: Dos modos de añadir ---
+
+// 1. MODO SIMPLE (+/-): Para ítems sin personalización (Pan Salchicha, etc.)
+// AHORA: Usa la lógica de ítems únicos y llama a un prompt al añadir (+)
+function updateCart(itemId, change, itemElement) {
+    const itemData = ALL_ITEMS_MAP[itemId];
+    // Si el ítem tiene opciones (es complejo), debe usar addItemWithDetails
+    if (!itemData || itemData.options) return; 
+
+    // --- Lógica de ADICIÓN (+) ---
+    if (change > 0) {
+        // Al presionar '+', pedimos la biografía/instrucción
+        const instruction = prompt(`Personaliza tu ${itemData.name}:\n\nEscribe aquí cualquier instrucción o biografía (Ej: con poca salsa, sin tomate, bien tostado, etc.).\n\nPresiona Aceptar para añadir al pedido.`);
+
+        if (instruction === null || (instruction.trim() === "" && Object.keys(cart).length > 0)) {
+            // Si cancela o no escribe nada, pero ya hay items en el carrito, no hacemos nada.
+            return;
+        }
+
+        const details = instruction.trim() ? ` (Nota: ${instruction.trim()})` : '';
+        const itemNameWithDetails = itemData.name + details;
+        
+        // Creamos un ID único, ya que cada instrucción es un ítem distinto.
+        const uniqueId = `${itemId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+        cart[uniqueId] = {
+            id: uniqueId, 
+            name: itemNameWithDetails,
+            price: itemData.price,
+            basePrice: itemData.price,
+            quantity: 1, // Siempre 1, porque es un ítem único y personalizado
+            isSimple: false, // Ahora se comporta como complejo
+            baseId: itemId // Guardamos el ID base para agrupar
+        };
+
+    // --- Lógica de ELIMINACIÓN (-) ---
+    } else if (change < 0) {
+        
+        // 1. Buscamos el ÚLTIMO ítem con ese itemId base en el carrito
+        const allItemsWithBaseId = Object.keys(cart)
+            .filter(uniqueId => cart[uniqueId].baseId === itemId)
+            .sort((a, b) => b.localeCompare(a)); // Ordenamos para encontrar el último añadido
+
+        if (allItemsWithBaseId.length > 0) {
+            const uniqueIdToRemove = allItemsWithBaseId[0];
+            delete cart[uniqueIdToRemove];
+        }
+    }
+    
+    updateCartDisplay();
+}
+
+
+// 2. MODO COMPLEJO (Añadir al Pedido): Para ítems con personalización (Whopper, etc.)
 function addItemWithDetails(id, name, price, itemElement) {
     let details = [];
     
-    // Captura Opciones (solo si existen)
     const checkboxes = itemElement.querySelectorAll('.opciones-grupo input[type="checkbox"]');
     checkboxes.forEach(cb => {
         if (cb.checked) {
@@ -101,16 +143,16 @@ function addItemWithDetails(id, name, price, itemElement) {
         }
     });
 
-    // Captura la 'Biografía' (Notas/Instrucciones)
     const notesBox = itemElement.querySelector('.instrucciones-box');
-    const notes = notesBox ? notesBox.value.trim() : '';
+    // Renombramos la caja de notas para que parezca la "biografía" para consistencia
+    const notes = notesBox ? notesBox.value.trim() : ''; 
     
     if (notes) {
-        details.push(`Nota: ${notes}`); // Añade la biografía como una nota
+        details.push(`Nota: ${notes}`);
     }
 
     const itemDetails = details.length > 0 ? ` (${details.join(', ')})` : '';
-    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`; // Crea ID único
+    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const itemName = name + itemDetails;
 
     cart[uniqueId] = { 
@@ -118,17 +160,15 @@ function addItemWithDetails(id, name, price, itemElement) {
         name: itemName, 
         price: price, 
         basePrice: price,
-        quantity: 1, // La cantidad es siempre 1 para ítems únicos
-        isSimple: false, // Ahora todos se tratan como ítems únicos
+        quantity: 1,
+        isSimple: false, 
         baseId: id 
     };
     
-    // Limpia la caja de notas y opciones después de añadir
     if (notesBox) {
         notesBox.value = '';
     }
     checkboxes.forEach(cb => {
-        // Reinicia las opciones a su estado por defecto
         if (cb.getAttribute('data-default-checked') === 'true') {
             cb.checked = true;
         } else {
@@ -149,7 +189,7 @@ function removeItemFromCart(uniqueId) {
 
 
 // --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY (Idea #3) ---
-// (MANTENIDA SIN CAMBIOS)
+
 function calculateDeliveryFee(callback) {
     if (!MENU_DATA) {
         if (callback) callback(0, 0, 0, 0);
@@ -242,7 +282,7 @@ function handleDeliveryToggle() {
 function calculateSubtotal() {
     let subtotal = 0;
     for (const uniqueId in cart) {
-        // Como cada ítem es único, la cantidad es siempre 1, sumamos el precio.
+        // Como cada ítem único representa 1 unidad, solo sumamos el precio
         subtotal += cart[uniqueId].price; 
     }
     return subtotal;
@@ -302,12 +342,10 @@ async function loadMenuData() {
                 
                 const isComplex = item.options && item.options.length > 0;
                 
-                // --- ESTRUCTURA DE ITEM PERSONALIZABLE (TODOS USAN LA MISMA AHORA) ---
-                
-                let optionsHTML = '';
-                
                 if (isComplex) {
-                    // Si el ítem tiene opciones predefinidas, las renderizamos (Whopper)
+                    // --- GENERACIÓN DE ITEM COMPLEJO (Mantiene la personalización original) ---
+                    let optionsHTML = '';
+                    
                     optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
                     optionsHTML += '<div class="opciones-grupo">';
                     item.options.forEach(option => {
@@ -320,37 +358,42 @@ async function loadMenuData() {
                             </label>`;
                     });
                     optionsHTML += '</div>';
-                }
-                
-                const placeholderText = `Escribe aquí la "Biografía" o Instrucciones detalladas de tu ${item.name} (Ej: Poco queso, sin pepinillos, la carne bien cocida)`;
-                
-                // La estructura principal del ítem (AHORA TODOS SON item-complex VISUALMENTE)
-                // Se ocultan las opciones de personalización si el ítem es simple
-                menuHtml += `
-                    <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
-                        <div class="item-header">
-                            <span class="item-title">${item.name} ${topVentaTag}</span>
-                            <span class="price">${item.price.toFixed(2)}$</span>
-                        </div>
-                        
-                        <div class="complex-options-container" style="display:${isComplex ? 'block' : 'none'};">
+                    
+                    const placeholderText = `Escribe aquí la "Biografía" o Instrucciones detalladas de tu ${item.name} (Ej: Poco queso, sin pepinillos, la carne bien cocida)`;
+
+
+                    menuHtml += `
+                        <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
+                            <div class="item-header">
+                                <span class="item-title">${item.name} ${topVentaTag}</span>
+                                <span class="price">${item.price.toFixed(2)}$</span>
+                            </div>
                             ${optionsHTML}
                             <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box"></textarea>
-                        </div>
-                        
-                        <div class="simple-controls-and-box" style="display:${isComplex ? 'none' : 'flex'};">
-                            <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box-simple"></textarea>
-                            
-                            <button class="add-to-cart-btn-simple" onclick="promptAndAddItem('${item.id}', '${item.name}', ${item.price}, this.parentNode.parentNode)">
-                                ➕ Añadir al Pedido
+                            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
+                                Añadir ${item.name} al Pedido
                             </button>
                         </div>
-                        
-                        <button class="add-to-cart-btn full-width" style="display:${isComplex ? 'block' : 'none'};" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
-                            Añadir ${item.name} al Pedido
-                        </button>
-                    </div>
-                `;
+                    `;
+
+                } else {
+                    // --- GENERACIÓN DE ITEM SIMPLE (CON BOTONES +/- Y LÓGICA DE PROMPT) ---
+                    menuHtml += `
+                        <div class="menu-item" data-id="${item.id}">
+                            <span class="item-info">${item.name} ${topVentaTag}</span>
+                            <div class="item-controls">
+                                <span class="price">${item.price.toFixed(2)}$</span>
+                                <div class="quantity-control">
+                                    <button class="quantity-btn" onclick="updateCart('${item.id}', -1, this.parentNode.parentNode.parentNode)">-</button>
+                                    
+                                    <span class="item-quantity" data-base-id="${item.id}">0</span>
+                                    
+                                    <button class="quantity-btn" onclick="updateCart('${item.id}', 1, this.parentNode.parentNode.parentNode)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
             });
 
             menuHtml += `
@@ -370,48 +413,6 @@ async function loadMenuData() {
     } catch (error) {
         console.error("Error al cargar o renderizar el menú:", error);
         document.getElementById('menu-content-container').innerHTML = `<p style="color:red; text-align:center;">❌ ERROR: No se pudo cargar el menú. Verifica que el archivo **menu_data.json** exista y esté correcto.</p>`;
-    }
-}
-
-/**
- * Función que simula un modal/prompt para pedir la instrucción del ítem simple.
- * Añade el ítem con su instrucción al carrito.
- */
-function promptAndAddItem(id, name, price, itemElement) {
-    const instruction = prompt(`Personaliza tu ${name}:\n\nEscribe aquí cualquier instrucción o biografía (Ej: con poca salsa, sin tomate, bien tostado, etc.).\n\nPresiona Aceptar para añadir al pedido.`);
-
-    if (instruction !== null) {
-        // Creamos un objeto de item simulado para usar addItemWithDetails
-        const simulatedItemElement = {
-            querySelector: (selector) => {
-                if (selector === '.instrucciones-box') {
-                    return { 
-                        value: instruction, // La instrucción capturada del prompt
-                        trim: () => instruction.trim(),
-                        // Necesitamos simular la función de limpieza para que no falle.
-                        value: instruction,
-                        value: '' // Lo dejamos vacío para la limpieza después de la adición
-                    };
-                }
-                if (selector === '.opciones-grupo input[type="checkbox"]') {
-                    return []; // Los ítems simples no tienen checkboxes
-                }
-                return null;
-            },
-            querySelectorAll: (selector) => {
-                 if (selector === '.opciones-grupo input[type="checkbox"]') {
-                    return []; 
-                }
-                return [];
-            },
-            
-            // Pasamos el elemento real en caso de que necesitemos algo de él.
-            parentNode: itemElement 
-        };
-
-        // Usamos la función existente de adición con los datos capturados
-        // Le pasamos un 'simulatedItemElement' para que capture la instrucción y la añada como nota
-        addItemWithDetails(id, name, price, simulatedItemElement);
     }
 }
 
@@ -436,13 +437,28 @@ function updateCartDisplay() {
     if (!MENU_DATA) return;
 
     let subtotal = calculateSubtotal();
-    let totalItems = Object.keys(cart).length; // Total de ITEMS ÚNICOS en el carrito
+    let totalItems = 0;
+    
+    // El total de ítems es el número de ITEMS ÚNICOS en el carrito
+    totalItems = Object.keys(cart).length;
     
     renderCartItems(); 
 
-    // Aquí eliminamos la lógica de `+/-` que ya no existe.
+    // --- LÓGICA NUEVA: Actualizar los contadores de ítems simples ---
+    const baseIdCounts = {};
+    for (const uniqueId in cart) {
+        const baseId = cart[uniqueId].baseId;
+        baseIdCounts[baseId] = (baseIdCounts[baseId] || 0) + 1;
+    }
+
+    document.querySelectorAll('.menu-item').forEach(itemEl => {
+        const itemId = itemEl.getAttribute('data-id');
+        const quantityElement = itemEl.querySelector('.item-quantity');
+        quantityElement.textContent = baseIdCounts[itemId] || 0;
+    });
+    // -----------------------------------------------------------------
     
-    // Actualiza el badge del contador de ítems
+    // Actualiza el badge del contador de ítems (total de ítems únicos)
     document.getElementById('cart-item-count').textContent = totalItems;
     document.getElementById('cart-item-count').style.display = totalItems > 0 ? 'inline-block' : 'none';
 
@@ -522,7 +538,6 @@ function updateCartDisplay() {
 
 
 // --- Lógica de Envío (Incluye GPS y Mesa) ---
-// (MANTENIDA SIN CAMBIOS, ya que la lógica de carrito es la misma que en la versión anterior)
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
@@ -532,12 +547,12 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     let index = 1;
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
-        // En este nuevo modelo, la cantidad es siempre 1 por ítem único personalizado
+        // La cantidad es 1, ya que cada entrada en el carrito es un ítem único y personalizado
         const itemQty = 1; 
         const itemName = item.name;
-        const itemPrice = item.price; // El precio base ya que quantity=1
+        const itemPrice = item.price; 
 
-        message += `${index}. *1x* ${itemName} = ${itemPrice.toFixed(2)}$\n`; // Se corrige para mostrar 1x
+        message += `${index}. *1x* ${itemName} = ${itemPrice.toFixed(2)}$\n`;
         index++;
     }
 
