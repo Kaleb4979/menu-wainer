@@ -193,7 +193,7 @@ function calculateDeliveryFee(callback) {
         // --- OPCIONES DE GEOLOCALIZACIÓN AJUSTADAS ---
         const geoOptions = {
             enableHighAccuracy: true, // Intenta obtener una lectura más precisa
-            timeout: 20000,           // 20 segundos de espera antes de fallar (antes 5s)
+            timeout: 20000,           // 20 segundos de espera antes de fallar (AJUSTE CLAVE)
             maximumAge: 0             // No usar caché, forzar nueva lectura
         };
         // ---------------------------------------------
@@ -203,6 +203,7 @@ function calculateDeliveryFee(callback) {
                 const clientLat = position.coords.latitude;
                 const clientLon = position.coords.longitude;
                 
+                // Estos valores están en tu menu_data.json
                 const ORIGIN_LAT = MENU_DATA.info.origin_lat;
                 const ORIGIN_LON = MENU_DATA.info.origin_lon;
                 
@@ -222,7 +223,7 @@ function calculateDeliveryFee(callback) {
                 
                 let userAlertMessage = 'No se pudo calcular el costo de envío (GPS/Ubicación inaccesible). El costo se calculará a la entrega.';
                 
-                // Error Code 1 is Permission Denied (El más común)
+                // Mantenemos la notificación explícita al usuario
                 if (error.code === 1) {
                     userAlertMessage = '⚠️ ¡Permiso de Ubicación Denegado! ⚠️\n\nTu navegador bloqueó el acceso a tu ubicación. Para calcular el costo de delivery automáticamente, debes permitir la localización y volver a seleccionar "Desea Delivery?".\n\nSi continúas, el costo de delivery se calculará a la entrega.';
                 } else if (error.code === 2) {
@@ -230,8 +231,7 @@ function calculateDeliveryFee(callback) {
                 } else if (error.code === 3) {
                      userAlertMessage = '⚠️ Tiempo de espera agotado. Tu conexión o GPS tardó mucho en responder. El costo de delivery se calculará a la entrega.';
                 }
-                
-                // Muestra un mensaje al usuario para que sepa qué pasó
+
                 alert(userAlertMessage);
                 
                 // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
@@ -506,7 +506,7 @@ function updateCartDisplay() {
             }
             
         } else {
-             // Modificamos el mensaje de detalles para ser más informativo sobre la espera
+             // Mensaje ajustado para informar sobre el nuevo tiempo de espera
              deliveryDetails.textContent = "⏳ Intentando obtener ubicación (máx. 20s). Si falla, el costo será calculado a la entrega.";
              
              if (totalItems > 0 && !checkoutBtn.disabled) {
