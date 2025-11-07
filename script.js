@@ -22,13 +22,13 @@ function filterMenu() {
 
     categories.forEach(category => {
         const categoryName = category.querySelector('h2').textContent.toLowerCase();
-        const items = category.querySelectorAll('.menu-item, .menu-item-complex');
+        const items = category.querySelectorAll('.menu-item-complex'); // Ahora todos son complejos
         let categoryMatches = categoryName.includes(searchTerm);
         let itemFound = false;
 
         items.forEach(item => {
-            // Asegura que busca el título del ítem, independientemente de si es simple o complejo
-            const itemTitleEl = item.querySelector('.item-title') || item.querySelector('.item-info');
+            // Asegura que busca el título del ítem
+            const itemTitleEl = item.querySelector('.item-title');
             const itemName = itemTitleEl ? itemTitleEl.textContent.toLowerCase() : '';
 
             if (itemName.includes(searchTerm) || searchTerm === '') {
@@ -79,38 +79,15 @@ function getDeliveryCost(distanceKm) {
 }
 
 
-// --- LÓGICA DE CARRO: Dos modos de añadir ---
+// --- LÓGICA DE CARRO: Solo MODO COMPLEJO (Adaptada a todos los ítems) ---
 
-// 1. MODO SIMPLE (+/-): Para ítems sin personalización (Pan Salchicha, etc.)
-function updateCart(itemId, change) {
-    const itemData = ALL_ITEMS_MAP[itemId];
-    if (!itemData || itemData.options) return;
+// ELIMINAMOS updateCart()
 
-    let currentQuantity = cart[itemId] ? cart[itemId].quantity : 0;
-    let newQuantity = currentQuantity + change;
-
-    if (newQuantity < 0) return;
-
-    if (newQuantity === 0) {
-        delete cart[itemId];
-    } else {
-        cart[itemId] = {
-            id: itemId, 
-            name: itemData.name,
-            price: itemData.price,
-            basePrice: itemData.price,
-            quantity: newQuantity,
-            isSimple: true 
-        };
-    }
-
-    updateCartDisplay();
-}
-
-// 2. MODO COMPLEJO (Añadir al Pedido): Para ítems con personalización (Whopper, etc.)
+// 2. MODO COMPLEJO (Añadir al Pedido): Ahora se usa para TODOS los ítems.
 function addItemWithDetails(id, name, price, itemElement) {
     let details = [];
     
+    // Captura Opciones (solo si existen)
     const checkboxes = itemElement.querySelectorAll('.opciones-grupo input[type="checkbox"]');
     checkboxes.forEach(cb => {
         if (cb.checked) {
@@ -118,15 +95,16 @@ function addItemWithDetails(id, name, price, itemElement) {
         }
     });
 
+    // Captura la 'Biografía' (Notas/Instrucciones)
     const notesBox = itemElement.querySelector('.instrucciones-box');
     const notes = notesBox ? notesBox.value.trim() : '';
     
     if (notes) {
-        details.push(`Nota: ${notes}`);
+        details.push(`Nota: ${notes}`); // Añade la biografía como una nota
     }
 
     const itemDetails = details.length > 0 ? ` (${details.join(', ')})` : '';
-    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`; // Crea ID único
     const itemName = name + itemDetails;
 
     cart[uniqueId] = { 
@@ -134,15 +112,17 @@ function addItemWithDetails(id, name, price, itemElement) {
         name: itemName, 
         price: price, 
         basePrice: price,
-        quantity: 1,
-        isSimple: false, 
+        quantity: 1, // La cantidad es siempre 1 para ítems únicos
+        isSimple: false, // Ahora todos se tratan como ítems únicos
         baseId: id 
     };
     
+    // Limpia la caja de notas y opciones después de añadir
     if (notesBox) {
         notesBox.value = '';
     }
     checkboxes.forEach(cb => {
+        // Reinicia las opciones a su estado por defecto
         if (cb.getAttribute('data-default-checked') === 'true') {
             cb.checked = true;
         } else {
@@ -156,7 +136,6 @@ function addItemWithDetails(id, name, price, itemElement) {
 // 3. FUNCIÓN DE ELIMINACIÓN ÚNICA (desde el carrito detallado)
 function removeItemFromCart(uniqueId) {
     if (cart[uniqueId]) {
-        // Si el ítem es simple, eliminamos toda la cantidad, lo que en la práctica es igual a eliminarlo.
         delete cart[uniqueId];
     }
     updateCartDisplay();
@@ -257,7 +236,8 @@ function handleDeliveryToggle() {
 function calculateSubtotal() {
     let subtotal = 0;
     for (const uniqueId in cart) {
-        subtotal += cart[uniqueId].price * cart[uniqueId].quantity;
+        // Como cada ítem es único, la cantidad es siempre 1.
+        subtotal += cart[uniqueId].price; 
     }
     return subtotal;
 }
@@ -316,11 +296,12 @@ async function loadMenuData() {
                 
                 const isComplex = item.options && item.options.length > 0;
                 
+                // --- AHORA TODOS LOS ÍTEMS USAN LA MISMA ESTRUCTURA DE PERSONALIZACIÓN ---
+                
+                let optionsHTML = '';
+                
                 if (isComplex) {
-                    // --- GENERACIÓN DE ITEM COMPLEJO (Botón Añadir + Opciones) ---
-                    let optionsHTML = '';
-                    let placeholderText = 'Instrucciones Especiales: (Ej: Poco queso, sin lechuga)';
-
+                    // Si el ítem tiene opciones predefinidas, las renderizamos
                     optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
                     optionsHTML += '<div class="opciones-grupo">';
                     item.options.forEach(option => {
@@ -333,38 +314,25 @@ async function loadMenuData() {
                             </label>`;
                     });
                     optionsHTML += '</div>';
-                    placeholderText = 'Instrucciones: (Ej: Sin pepinillos, extra queso)';
-
-                    menuHtml += `
-                        <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
-                            <div class="item-header">
-                                <span class="item-title">${item.name} ${topVentaTag}</span>
-                                <span class="price">${item.price.toFixed(2)}$</span>
-                            </div>
-                            ${optionsHTML}
-                            <textarea placeholder="${placeholderText}" rows="2" class="instrucciones-box"></textarea>
-                            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
-                                Añadir ${item.name} al Pedido
-                            </button>
-                        </div>
-                    `;
-
-                } else {
-                    // --- GENERACIÓN DE ITEM SIMPLE (Botones +/-) ---
-                    menuHtml += `
-                        <div class="menu-item" data-id="${item.id}">
-                            <span class="item-info">${item.name} ${topVentaTag}</span>
-                            <div class="item-controls">
-                                <span class="price">${item.price.toFixed(2)}$</span>
-                                <div class="quantity-control">
-                                    <button class="quantity-btn" onclick="updateCart('${item.id}', -1)">-</button>
-                                    <span class="item-quantity">0</span>
-                                    <button class="quantity-btn" onclick="updateCart('${item.id}', 1)">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
                 }
+                
+                // Creamos el placeholder de la biografía para CUALQUIER ítem
+                const placeholderText = `Escribe aquí la "Biografía" o Instrucciones detalladas de tu ${item.name} (Ej: Poco queso, sin pepinillos, la carne bien cocida)`;
+
+
+                menuHtml += `
+                    <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
+                        <div class="item-header">
+                            <span class="item-title">${item.name} ${topVentaTag}</span>
+                            <span class="price">${item.price.toFixed(2)}$</span>
+                        </div>
+                        ${optionsHTML}
+                        <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box"></textarea>
+                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
+                            Añadir ${item.name} al Pedido
+                        </button>
+                    </div>
+                `;
             });
 
             menuHtml += `
@@ -408,19 +376,14 @@ function updateCartDisplay() {
     if (!MENU_DATA) return;
 
     let subtotal = calculateSubtotal();
-    let totalItems = 0;
+    let totalItems = Object.keys(cart).length; // Total de ITEMS ÚNICOS en el carrito
     
-    for (const uniqueId in cart) {
-        totalItems += cart[uniqueId].quantity;
-    }
+    // ELIMINAMOS la lógica de actualizar los contadores +/- en la vista
+    // document.querySelectorAll('.menu-item').forEach(itemEl => { ... });
+
     
     renderCartItems(); // Llamada para manejar la visibilidad del contenedor.
 
-    document.querySelectorAll('.menu-item').forEach(itemEl => {
-        const itemId = itemEl.getAttribute('data-id');
-        const quantityElement = itemEl.querySelector('.item-quantity');
-        quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
-    });
     
     // Actualiza el badge del contador de ítems
     document.getElementById('cart-item-count').textContent = totalItems;
@@ -511,11 +474,12 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     let index = 1;
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
-        const itemQty = item.isSimple ? item.quantity : 1;
+        // En este nuevo modelo, la cantidad es siempre 1 por ítem único personalizado
+        const itemQty = 1; 
         const itemName = item.name;
-        const itemPrice = item.price * itemQty;
+        const itemPrice = item.price; // El precio base ya que quantity=1
 
-        message += `${index}. *${itemQty}x* ${itemName} = ${itemPrice.toFixed(2)}$\n`;
+        message += `${index}. *1x* ${itemName} = ${itemPrice.toFixed(2)}$\n`; // Se corrige para mostrar 1x
         index++;
     }
 
@@ -569,7 +533,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         servicio: serviceType,
         distancia: distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "N/A",
         // Concatenar los detalles de los ítems en un formato legible
-        detalle_pedido: Object.values(cart).map(item => `${item.quantity}x ${item.name}`).join('; '),
+        detalle_pedido: Object.values(cart).map(item => `1x ${item.name}`).join('; '),
         ubicacion_url: mapsUrlForLog
     };
 
