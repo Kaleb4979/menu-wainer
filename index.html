@@ -60,11 +60,17 @@
     
     <div class="cart-float">
         <div class="cart-total">
-            🛒 Total: <span id="cart-total-price">0.00</span>$
+            🛒 <span id="cart-item-count" class="cart-item-badge">0</span> Total: <span id="cart-total-price">0.00</span>$
         </div>
-        <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
-            Hacer Pedido por WhatsApp
-        </button>
+        <div id="checkout-status-container" style="position:relative; flex-grow: 1;">
+            <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
+                Hacer Pedido por WhatsApp
+            </button>
+            <div id="cooldown-bar" class="cooldown-progress-bar" style="display:none;">
+                <div id="cooldown-fill" class="cooldown-fill"></div>
+                <span id="cooldown-text" class="cooldown-text"></span>
+            </div>
+        </div>
     </div>
 
     <footer>
