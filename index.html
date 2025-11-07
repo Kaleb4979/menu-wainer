@@ -84,7 +84,14 @@
     
     <div class="cart-float">
         <div class="cart-total">
-            🛒 <span id="cart-item-count" class="cart-item-badge">0</span> Total: <span id="cart-total-price">0.00</span>$
+            🛒 
+            <span id="cart-item-count" class="cart-item-badge">0</span> 
+            
+            <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 5px;">
+                <span style="font-size: 1.4em; font-weight: bold;">Total: <span id="cart-total-price">0.00</span>$</span>
+                <div id="conversion-container" class="conversion-box" style="display: none;"></div> 
+            </div>
+            
         </div>
         <div id="checkout-status-container" style="position:relative; flex-grow: 1;">
             <button onclick="checkAndSendOrder()" id="checkout-btn" disabled>
@@ -104,4 +111,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
