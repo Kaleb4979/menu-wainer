@@ -190,6 +190,14 @@ function calculateDeliveryFee(callback) {
     }
 
     if (navigator.geolocation) {
+        // --- OPCIONES DE GEOLOCALIZACIÓN AJUSTADAS ---
+        const geoOptions = {
+            enableHighAccuracy: true, // Intenta obtener una lectura más precisa
+            timeout: 20000,           // 20 segundos de espera antes de fallar (antes 5s)
+            maximumAge: 0             // No usar caché, forzar nueva lectura
+        };
+        // ---------------------------------------------
+        
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const clientLat = position.coords.latitude;
@@ -217,10 +225,13 @@ function calculateDeliveryFee(callback) {
                 // Error Code 1 is Permission Denied (El más común)
                 if (error.code === 1) {
                     userAlertMessage = '⚠️ ¡Permiso de Ubicación Denegado! ⚠️\n\nTu navegador bloqueó el acceso a tu ubicación. Para calcular el costo de delivery automáticamente, debes permitir la localización y volver a seleccionar "Desea Delivery?".\n\nSi continúas, el costo de delivery se calculará a la entrega.';
-                } else if (error.code === 2 || error.code === 3) {
-                    userAlertMessage = '⚠️ No se pudo obtener tu ubicación (Señal débil o GPS lento). Si continúas, el costo de delivery se calculará a la entrega.';
+                } else if (error.code === 2) {
+                    userAlertMessage = '⚠️ Ubicación no disponible. No se pudo obtener la posición. El costo de delivery se calculará a la entrega.';
+                } else if (error.code === 3) {
+                     userAlertMessage = '⚠️ Tiempo de espera agotado. Tu conexión o GPS tardó mucho en responder. El costo de delivery se calculará a la entrega.';
                 }
-
+                
+                // Muestra un mensaje al usuario para que sepa qué pasó
                 alert(userAlertMessage);
                 
                 // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
@@ -232,7 +243,8 @@ function calculateDeliveryFee(callback) {
                 
                 if (callback) callback(0, 0, 0, 0); 
                 updateCartDisplay(); // Forzar actualización del total con el error
-            }
+            },
+            geoOptions // Aplicamos las nuevas opciones de timeout y precisión
         );
     } else {
         console.error('Geolocalización no soportada.');
@@ -494,7 +506,8 @@ function updateCartDisplay() {
             }
             
         } else {
-             deliveryDetails.textContent = "⏳ Calculando costo de Delivery... Por favor, acepte el permiso de ubicación.";
+             // Modificamos el mensaje de detalles para ser más informativo sobre la espera
+             deliveryDetails.textContent = "⏳ Intentando obtener ubicación (máx. 20s). Si falla, el costo será calculado a la entrega.";
              
              if (totalItems > 0 && !checkoutBtn.disabled) {
                  checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
