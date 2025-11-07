@@ -482,3 +482,55 @@ footer { display: none; }
     text-shadow: 0 0 3px var(--color-wainer-dark);
 }
 /* Fin de estilos de Cooldown */
+
+/* --- NUEVOS ESTILOS PARA LA SECCIÓN DE PUBLICIDAD --- */
+
+.publicidad-container {
+    max-width: 900px;
+    margin: 30px auto; /* Separación después del menú */
+    padding: 0 15px;
+    text-align: center;
+}
+
+.publicidad-container h2 {
+    color: var(--color-wainer-gold);
+    font-size: 1.8em;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--color-wainer-red);
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.video-gallery {
+    display: flex;
+    flex-wrap: wrap; /* Para que los videos se apilen en pantallas pequeñas */
+    gap: 20px;
+    justify-content: center;
+}
+
+.video-item {
+    background-color: #222;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    padding: 10px;
+    flex: 1 1 400px; /* Permite que ocupe casi la mitad, pero se ajuste */
+    max-width: 100%;
+}
+
+.video-item h3 {
+    color: var(--color-wainer-light);
+    font-size: 1.2em;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.video-item iframe {
+    width: 100%;
+    /* Relación de aspecto 16:9 - 9 / 16 = 0.5625 = 56.25% */
+    aspect-ratio: 16 / 9; 
+    display: block;
+    border-radius: 4px;
+}
+
+/* --- FIN ESTILOS DE PUBLICIDAD --- */
