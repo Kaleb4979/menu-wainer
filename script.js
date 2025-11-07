@@ -233,7 +233,7 @@ function calculateDeliveryFee(callback) {
                 setTimeout(() => {
                     loadingMessage.style.display = 'none';
                     checkoutBtn.disabled = totalItems === 0;
-                    checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${calculateSubtotal().toFixed(2)}$`;
+                    checkoutBtn.textContent = `Hacer Pedido (${calculateSubtotal()} ítems) - Subtotal: ${calculateSubtotal().toFixed(2)}$`;
                 }, 5000); 
                 
                 if (callback) callback(0, 0, 0, 0); 
@@ -582,8 +582,11 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
-    // Se ha corregido la URL de Google Maps para que sea más estándar y funcione correctamente
-    const mapsUrl = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
+    // ===============================================
+    // *** CORRECCIÓN APLICADA AQUÍ ***
+    // Se utiliza el formato oficial de Google Maps para una URL que funcione
+    // ===============================================
+    const mapsUrl = (lat && lon) ? `https://maps.google.com/?q=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
         message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
@@ -620,7 +623,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
     // ----------------------------------------------------
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
-    const mapsUrlForLog = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
+    const mapsUrlForLog = (lat && lon) ? `https://maps.google.com/?q=${lat},${lon}` : "N/A";
 
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
