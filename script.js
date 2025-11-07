@@ -8,6 +8,10 @@ let currentMesa = null;
 let deliveryFee = 0;
 let userLocation = null;
 
+// >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<
+const LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp2udcJbugOI995I80QI18eME0tJ-BMlUOq2xqEuAT_6n2Gijnn/exec'; 
+// =================================================================
+
 // --- Funciones de Utilidad ---
 
 function getUrlParameter(name) {
@@ -270,7 +274,7 @@ function renderCartItems() {
             <div class="cart-item-detail">
                 <span class="cart-item-qty">${itemQty}x</span>
                 <span class="cart-item-name">${item.name}</span>
-                <span class="cart-item-price">${(item.price * itemQty).toFixed(2)}$</span>
+                <span class="cart-item-price">${(item.price * itemQty).toFixed(2)}$}</span>
                 <button class="remove-item-btn" 
                         onclick="removeItemFromCart('${uniqueId}')">
                     ❌
@@ -400,6 +404,44 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
     message += "----------------------------------\n";
     message += "\nPor favor, indique su nombre.";
+    
+    
+    // ----------------------------------------------------
+    // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
+    // ----------------------------------------------------
+    const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
+    const mapsUrl = distanceKm > 0 ? `https://www.google.com/maps/search/?api=1&query=$${lat},${lon}` : "N/A";
+
+    const logData = {
+        fecha: new Date().toLocaleDateString('es-VE'),
+        hora: new Date().toLocaleTimeString('es-VE'),
+        total: finalTotal.toFixed(2),
+        servicio: serviceType,
+        distancia: distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "N/A",
+        // Concatenar los detalles de los ítems en un formato legible
+        detalle_pedido: Object.values(cart).map(item => `${item.quantity}x ${item.name}`).join('; '),
+        ubicacion_url: mapsUrl
+    };
+
+    // Envía los datos de forma asíncrona a tu endpoint (Google Apps Script)
+    fetch(LOG_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors', 
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(logData)
+    })
+    .then(response => {
+        // La consola indicará que se intentó enviar, incluso con 'no-cors'
+        console.log("Datos de pedido enviados para registro.");
+    })
+    .catch(error => console.error('Error al intentar registrar el pedido:', error));
+    
+    // ----------------------------------------------------
+    // >> FIN LÓGICA DE REGISTRO <<
+    // ----------------------------------------------------
+
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${MENU_DATA.info.whatsapp_number}?text=${encodedMessage}`;
