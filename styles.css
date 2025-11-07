@@ -90,7 +90,7 @@ body {
 
 .menu-category {
     background-color: #222;
-    padding: 20px;
+    padding: 20px; /* Base: 20px */
     margin-bottom: 30px;
     border-radius: 10px;
     border-left: 5px solid var(--color-wainer-gold);
@@ -110,6 +110,28 @@ body {
     margin-bottom: 15px;
     font-size: 0.9em;
 }
+
+/* ================================================= */
+/* === ESTILOS PARA HACER LA CATEGORÍA DE VIDEOS MÁS COMPACTA === */
+/* Utilizamos :first-child porque la categoría de videos es la primera */
+/* ================================================= */
+
+.menu-category:first-child {
+    padding: 10px 15px; /* Reducir mucho el padding de la sección */
+    margin-bottom: 15px; /* Reducir el margen inferior */
+}
+
+.menu-category:first-child h2 {
+    font-size: 1.4em; /* Reducir el tamaño del título */
+    border-bottom: none; /* Quitar la línea divisoria del título */
+    padding-bottom: 0;
+    margin-bottom: 5px; /* Reducir el margen inferior del título */
+}
+
+.menu-category:first-child .slogan {
+    display: none; /* Ocultar el eslogan para ahorrar espacio */
+}
+
 
 .top-venta-tag {
     background-color: var(--color-tag-bg);
@@ -132,18 +154,25 @@ body {
     font-size: 1.1em;
 }
 
-/* ESTILO ESPECÍFICO PARA EL ENLACE DE VIDEOS */
+/* ESTILO ESPECÍFICO PARA EL ENLACE DE VIDEOS (link-item) */
 .menu-item.link-item {
-    /* Reducir el padding vertical para que sea más delgado */
-    padding: 5px 0; 
-    /* Darle un borde para que se vea como un botón */
+    padding: 5px 10px; /* Reducir el padding vertical para que sea más delgado */
     border: 2px solid var(--color-wainer-gold);
     border-radius: 5px;
-    margin: 10px 0;
+    margin: 10px 0 0 0; /* Ajustar margen para pegarlo al título */
     background-color: #303030;
     cursor: pointer;
     transition: background-color 0.2s;
+    /* Asegura que el texto y el botón "Ver ahora" estén bien alineados */
+    width: 100%;
+    box-sizing: border-box;
 }
+
+.menu-item.link-item .item-info {
+    /* Ajuste para que el texto ocupe menos espacio */
+    margin-left: 5px; 
+}
+
 
 .menu-item.link-item:hover {
     background-color: #444;
@@ -547,7 +576,7 @@ footer { display: none; }
 }
 /* Fin de estilos de Cooldown */
 
-/* --- NUEVOS ESTILOS PARA LA SECCIÓN DE PUBLICIDAD --- */
+/* --- NUEVOS ESTILOS PARA LA SECCIÓN DE PUBLICIDAD (Videos) --- */
 
 .publicidad-container {
     max-width: 900px;
@@ -599,7 +628,8 @@ footer { display: none; }
 
 /* Estilo para el botón de regreso dentro de la sección de videos */
 #back-to-menu-btn {
-    margin-top: 30px;
+    margin-top: 5px; /* Reducido */
+    margin-bottom: 20px; /* Separación después del botón */
     padding: 10px 20px;
     background-color: var(--color-wainer-red);
     color: var(--color-wainer-light);
@@ -609,6 +639,11 @@ footer { display: none; }
     font-size: 1.1em;
     font-weight: bold;
     transition: background-color 0.2s;
+    display: block; /* Aseguramos que ocupe todo el ancho disponible si es necesario */
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #back-to-menu-btn:hover {
