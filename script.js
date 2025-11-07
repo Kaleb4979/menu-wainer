@@ -6,6 +6,7 @@ let ALL_ITEMS_MAP = {};
 let cart = {}; 
 let currentMesa = null; 
 let deliveryFee = 0;
+let deliveryCalculated = false; // Flag para evitar recalcular
 let userLocation = null;
 
 // >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<
@@ -13,6 +14,38 @@ const LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp
 // =================================================================
 
 // --- Funciones de Utilidad ---
+
+// --- LÓGICA DE BÚSQUEDA (Idea #1) ---
+function filterMenu() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+    const categories = document.querySelectorAll('.menu-category');
+
+    categories.forEach(category => {
+        const categoryName = category.querySelector('h2').textContent.toLowerCase();
+        const items = category.querySelectorAll('.menu-item, .menu-item-complex');
+        let categoryMatches = categoryName.includes(searchTerm);
+        let itemFound = false;
+
+        items.forEach(item => {
+            const itemName = item.querySelector('.item-title') ? item.querySelector('.item-title').textContent.toLowerCase() : item.querySelector('.item-info').textContent.toLowerCase();
+
+            if (itemName.includes(searchTerm) || searchTerm === '') {
+                item.classList.remove('hidden');
+                itemFound = true;
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+
+        // Oculta la categoría si no coincide el nombre y ningún ítem es visible
+        if (searchTerm !== '' && !categoryMatches && !itemFound) {
+            category.classList.add('hidden');
+        } else {
+            category.classList.remove('hidden');
+        }
+    });
+}
+// ------------------------------------
 
 function getUrlParameter(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -127,6 +160,105 @@ function removeItemFromCart(uniqueId) {
 }
 
 
+// --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY (Idea #3) ---
+
+function calculateDeliveryFee(callback) {
+    if (!MENU_DATA) {
+        if (callback) callback(0, 0, 0, 0);
+        return;
+    }
+
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const loadingMessage = document.getElementById('loading-location');
+    loadingMessage.style.display = 'block';
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Calculando envío...';
+    
+    // Si ya fue calculado, simplemente actualizamos la vista
+    if (deliveryCalculated) {
+        const subtotal = calculateSubtotal();
+        const finalTotal = subtotal + deliveryFee;
+        loadingMessage.style.display = 'none';
+        checkoutBtn.disabled = false;
+        if (callback) callback(deliveryFee, 0, 0, 0); // No necesitamos pasar lat/lon/dist en este caso
+        return;
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const clientLat = position.coords.latitude;
+                const clientLon = position.coords.longitude;
+                
+                const ORIGIN_LAT = MENU_DATA.info.origin_lat;
+                const ORIGIN_LON = MENU_DATA.info.origin_lon;
+                
+                const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
+                
+                deliveryFee = getDeliveryCost(distanceKm); 
+                deliveryCalculated = true; // Establecer flag
+
+                loadingMessage.style.display = 'none';
+                checkoutBtn.disabled = false;
+                
+                if (callback) callback(deliveryFee, distanceKm, clientLat, clientLon);
+                updateCartDisplay(); // Forzar actualización del total
+            },
+            (error) => {
+                console.error('Error de geolocalización:', error);
+                
+                // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
+                deliveryFee = 0;
+                deliveryCalculated = false; 
+
+                loadingMessage.style.display = 'none';
+                checkoutBtn.disabled = false;
+                
+                if (callback) callback(0, 0, 0, 0); 
+                updateCartDisplay(); // Forzar actualización del total con el error
+            }
+        );
+    } else {
+        console.error('Geolocalización no soportada.');
+        
+        deliveryFee = 0;
+        deliveryCalculated = false;
+
+        loadingMessage.style.display = 'none';
+        checkoutBtn.disabled = false;
+        
+        if (callback) callback(0, 0, 0, 0); 
+        updateCartDisplay(); // Forzar actualización del total con el error
+    }
+}
+
+function handleDeliveryToggle() {
+    const isDelivery = document.getElementById('delivery-checkbox').checked;
+    const loadingMessage = document.getElementById('loading-location');
+    
+    if (isDelivery) {
+        // Al marcar, intentar calcular
+        calculateDeliveryFee(() => {});
+    } else {
+        // Al desmarcar, resetear valores
+        deliveryFee = 0;
+        deliveryCalculated = false;
+        loadingMessage.style.display = 'none';
+        updateCartDisplay(); 
+    }
+}
+
+// ------------------------------------
+
+// Utility function to calculate subtotal
+function calculateSubtotal() {
+    let subtotal = 0;
+    for (const uniqueId in cart) {
+        subtotal += cart[uniqueId].price * cart[uniqueId].quantity;
+    }
+    return subtotal;
+}
+
 // --- Función principal para cargar el menú y Renderizar ---
 async function loadMenuData() {
     try {
@@ -240,6 +372,9 @@ async function loadMenuData() {
 
         document.getElementById('menu-content-container').innerHTML = menuHtml;
         
+        // Add search listener
+        document.getElementById('search-input').addEventListener('input', filterMenu);
+        
         updateCartDisplay();
         setInterval(updateCartDisplay, 1000);
 
@@ -289,13 +424,11 @@ function renderCartItems() {
 function updateCartDisplay() {
     if (!MENU_DATA) return;
 
-    let subtotal = 0;
+    let subtotal = calculateSubtotal();
     let totalItems = 0;
     
     for (const uniqueId in cart) {
-        const item = cart[uniqueId];
-        subtotal += item.price * item.quantity;
-        totalItems += item.quantity;
+        totalItems += cart[uniqueId].quantity;
     }
     
     renderCartItems(); 
@@ -325,7 +458,7 @@ function updateCartDisplay() {
     }
 
     let currentTotal = subtotal;
-
+    
     document.getElementById('cart-total-price').textContent = subtotal.toFixed(2);
     
     if (currentMesa) {
@@ -334,10 +467,22 @@ function updateCartDisplay() {
             checkoutBtn.textContent = `Hacer Pedido MESA ${currentMesa} - Total: ${currentTotal.toFixed(2)}$`;
         }
     } else if (isDelivery) {
-        deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación. (1$ por km, mínimo 1$)";
         
-        if (totalItems > 0 && !checkoutBtn.disabled) {
-             checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
+        if (deliveryCalculated) {
+            currentTotal += deliveryFee;
+            deliveryDetails.textContent = `✅ Costo de Delivery calculado: ${deliveryFee.toFixed(2)}$`;
+            document.getElementById('cart-total-price').textContent = currentTotal.toFixed(2);
+            
+            if (totalItems > 0 && !checkoutBtn.disabled) {
+                 checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - TOTAL: ${currentTotal.toFixed(2)}$`;
+            }
+            
+        } else {
+             deliveryDetails.textContent = "⏳ Calculando costo de Delivery... Por favor, acepte el permiso de ubicación.";
+             
+             if (totalItems > 0 && !checkoutBtn.disabled) {
+                 checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
+             }
         }
     } else {
         deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
@@ -373,14 +518,15 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
+    // Corrected Google Maps URL using a standard format that works with coordinates
+    const mapsUrl = distanceKm > 0 ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
+    
     if (currentMesa) {
         message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
         message += `✅ *SERVICIO:* COMER EN LOCAL 🍽️\n`;
         message += `💰 *TOTAL A PAGAR:* ${subtotal.toFixed(2)}$\n`;
         
     } else if (isDelivery) {
-        
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
         
         if (distanceKm > 0) {
             const deliveryCost = finalTotal - subtotal;
@@ -410,7 +556,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
     // ----------------------------------------------------
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
-    const mapsUrl = distanceKm > 0 ? `https://www.google.com/maps/search/?api=1&query=$${lat},${lon}` : "N/A";
+    const mapsUrlForLog = distanceKm > 0 ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
 
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
@@ -420,7 +566,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         distancia: distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "N/A",
         // Concatenar los detalles de los ítems en un formato legible
         detalle_pedido: Object.values(cart).map(item => `${item.quantity}x ${item.name}`).join('; '),
-        ubicacion_url: mapsUrl
+        ubicacion_url: mapsUrlForLog
     };
 
     // Envía los datos de forma asíncrona a tu endpoint (Google Apps Script)
@@ -469,10 +615,7 @@ function checkAndSendOrder() {
         return;
     }
     
-    let subtotal = 0;
-    for (const id in cart) {
-        subtotal += cart[id].price * cart[id].quantity;
-    }
+    let subtotal = calculateSubtotal();
 
     if (Object.keys(cart).length === 0) {
         alert("Por favor, agregue al menos un artículo al carrito antes de hacer el pedido.");
@@ -493,48 +636,27 @@ function checkAndSendOrder() {
         return;
     }
     
-    // Si es Delivery, intentamos obtener la ubicación y calcular
-    const checkoutBtn = document.getElementById('checkout-btn');
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Calculando envío...';
-    document.getElementById('loading-location').style.display = 'block';
+    // Si es Delivery, usamos el cálculo previamente hecho o lo hacemos ahora.
+    if (deliveryCalculated) {
+        const finalTotal = subtotal + deliveryFee;
+        // La información de lat/lon/dist se obtendrá de nuevo dentro de sendOrder si es necesario,
+        // pero por ahora solo pasamos el total y la tarifa.
+        // Lo más seguro es recalcular aquí para obtener los datos GPS frescos si la llamada a sendOrder los necesita.
+        
+        const checkoutBtn = document.getElementById('checkout-btn');
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = 'Procesando pedido...';
+        
+        calculateDeliveryFee((fee, distanceKm, clientLat, clientLon) => {
+             const final = subtotal + fee;
+             sendOrder(subtotal, final, distanceKm, clientLat, clientLon);
+             checkoutBtn.disabled = false; // El botón se rehabilita al final de sendOrder
+        });
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const clientLat = position.coords.latitude;
-                const clientLon = position.coords.longitude;
-                
-                const ORIGIN_LAT = MENU_DATA.info.origin_lat;
-                const ORIGIN_LON = MENU_DATA.info.origin_lon;
-                
-                const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
-                
-                const deliveryCost = getDeliveryCost(distanceKm); 
-                
-                const finalTotal = subtotal + deliveryCost;
-
-                checkoutBtn.textContent = 'Hacer Pedido';
-                document.getElementById('loading-location').style.display = 'none';
-
-                sendOrder(subtotal, finalTotal, distanceKm, clientLat, clientLon);
-            },
-            (error) => {
-                console.error('Error de geolocalización:', error);
-                
-                checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
-                document.getElementById('loading-location').style.display = 'none';
-
-                sendOrder(subtotal, subtotal, 0, 0, 0); // Envío pendiente
-            }
-        );
     } else {
-        console.error('Geolocalización no soportada.');
-        
-        checkoutBtn.textContent = 'Hacer Pedido (Envío Pendiente)';
-        document.getElementById('loading-location').style.display = 'none';
-        
-        sendOrder(subtotal, subtotal, 0, 0, 0); // Envío pendiente
+        // Si no se pudo calcular (por error de GPS), enviamos con costo 0 y advertencia.
+        alert("No se pudo calcular el costo de envío (permiso de GPS denegado o no soportado). El costo se calculará a la entrega.");
+        sendOrder(subtotal, subtotal, 0, 0, 0); // Envío pendiente (costo 0)
     }
 }
 
