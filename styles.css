@@ -397,3 +397,33 @@ body {
 }
 
 footer { display: none; }
+
+/* --- NUEVOS ESTILOS DE BÚSQUEDA --- */
+.search-container {
+    padding: 0 15px 15px 15px;
+    max-width: 900px;
+    margin: -20px auto 0 auto; /* Ajusta el margen superior para que se vea mejor */
+}
+
+#search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 15px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #444;
+    color: var(--color-wainer-light);
+    font-size: 1em;
+    transition: border-color 0.2s;
+}
+
+#search-input:focus {
+    border-color: var(--color-wainer-gold);
+    outline: none;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+/* Ocultar categorías y ítems no coincidentes */
+.menu-category.hidden, .menu-item-list.hidden, .menu-item.hidden, .menu-item-complex.hidden {
+    display: none !important;
+}
