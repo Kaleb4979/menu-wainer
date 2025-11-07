@@ -9,8 +9,7 @@ let deliveryFee = 0;
 let deliveryCalculated = false; 
 let userLocation = { lat: 0, lon: 0, distanceKm: 0 }; 
 
-// >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS Y TASA DE CAMBIO <<<
-// Usamos la misma URL para ambos propósitos (doPost y doGet)
+// >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS Y TASA DE CAMBIO (MISMA URL) <<<
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp2udcJbugOI995I80QI18eME0tJ-BMlUOq2xqEuAT_6n2Gijnn/exec';
 
 const LOG_ENDPOINT = ENDPOINT_URL; 
@@ -292,8 +291,10 @@ async function loadMenuData() {
         // 1. OBTENER TASA DE CAMBIO DESDE EL EXCEL (APPS SCRIPT)
         let rate = 0;
         try {
-            // Llama al Apps Script usando GET para obtener la tasa de la celda A2 de la Hoja 1
-            const rateResponse = await fetch(RATE_ENDPOINT); 
+            // AÑADIR TIMESTAMP PARA EVITAR CACHÉ DEL NAVEGADOR
+            const nocacheUrl = RATE_ENDPOINT + '?v=' + new Date().getTime(); 
+            
+            const rateResponse = await fetch(nocacheUrl); 
             const rateData = await rateResponse.json();
             rate = parseFloat(rateData.exchange_rate);
             if (isNaN(rate) || rate <= 0) {
