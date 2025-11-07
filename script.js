@@ -291,7 +291,7 @@ async function loadMenuData() {
         // 1. OBTENER TASA DE CAMBIO DESDE EL EXCEL (APPS SCRIPT)
         let rate = 0;
         try {
-            // AÑADIR TIMESTAMP PARA EVITAR CACHÉ DEL NAVEGADOR
+            // AÑADIR TIMESTAMP PARA EVITAR CACHÉ DEL NAVEGADOR (CORRECCIÓN DE CORS)
             const nocacheUrl = RATE_ENDPOINT + '?v=' + new Date().getTime(); 
             
             const rateResponse = await fetch(nocacheUrl); 
