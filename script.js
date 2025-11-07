@@ -22,13 +22,14 @@ function filterMenu() {
 
     categories.forEach(category => {
         const categoryName = category.querySelector('h2').textContent.toLowerCase();
-        const items = category.querySelectorAll('.menu-item-complex'); // Ahora todos son complejos
+        // Buscamos en ambos tipos de contenedores por si acaso la clase "menu-item" aún está en uso en el HTML
+        const items = category.querySelectorAll('.menu-item, .menu-item-complex'); 
         let categoryMatches = categoryName.includes(searchTerm);
         let itemFound = false;
 
         items.forEach(item => {
             // Asegura que busca el título del ítem
-            const itemTitleEl = item.querySelector('.item-title');
+            const itemTitleEl = item.querySelector('.item-title') || item.querySelector('.item-info');
             const itemName = itemTitleEl ? itemTitleEl.textContent.toLowerCase() : '';
 
             if (itemName.includes(searchTerm) || searchTerm === '') {
@@ -78,12 +79,17 @@ function getDeliveryCost(distanceKm) {
     return Math.max(minCost, distanceKm * ratePerKm);
 }
 
+// --- LÓGICA DE CARRO: Solo MODO ÚNICO (Con Instrucciones) ---
 
-// --- LÓGICA DE CARRO: Solo MODO COMPLEJO (Adaptada a todos los ítems) ---
-
-// ELIMINAMOS updateCart()
-
-// 2. MODO COMPLEJO (Añadir al Pedido): Ahora se usa para TODOS los ítems.
+/**
+ * Función central para añadir CUALQUIER ítem al carrito. 
+ * Todos los ítems se añaden como elementos únicos (quantity=1) con sus detalles.
+ * @param {string} id - El ID base del ítem (ej: 'pan-salchicha').
+ * @param {string} name - El nombre base del ítem.
+ * @param {number} price - El precio del ítem.
+ * @param {HTMLElement} itemElement - El contenedor padre del ítem.
+ * @param {boolean} isSimpleMode - Indica si es un ítem simple (sin opciones).
+ */
 function addItemWithDetails(id, name, price, itemElement) {
     let details = [];
     
@@ -143,7 +149,7 @@ function removeItemFromCart(uniqueId) {
 
 
 // --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY (Idea #3) ---
-
+// (MANTENIDA SIN CAMBIOS)
 function calculateDeliveryFee(callback) {
     if (!MENU_DATA) {
         if (callback) callback(0, 0, 0, 0);
@@ -236,7 +242,7 @@ function handleDeliveryToggle() {
 function calculateSubtotal() {
     let subtotal = 0;
     for (const uniqueId in cart) {
-        // Como cada ítem es único, la cantidad es siempre 1.
+        // Como cada ítem es único, la cantidad es siempre 1, sumamos el precio.
         subtotal += cart[uniqueId].price; 
     }
     return subtotal;
@@ -296,12 +302,12 @@ async function loadMenuData() {
                 
                 const isComplex = item.options && item.options.length > 0;
                 
-                // --- AHORA TODOS LOS ÍTEMS USAN LA MISMA ESTRUCTURA DE PERSONALIZACIÓN ---
+                // --- ESTRUCTURA DE ITEM PERSONALIZABLE (TODOS USAN LA MISMA AHORA) ---
                 
                 let optionsHTML = '';
                 
                 if (isComplex) {
-                    // Si el ítem tiene opciones predefinidas, las renderizamos
+                    // Si el ítem tiene opciones predefinidas, las renderizamos (Whopper)
                     optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
                     optionsHTML += '<div class="opciones-grupo">';
                     item.options.forEach(option => {
@@ -316,19 +322,31 @@ async function loadMenuData() {
                     optionsHTML += '</div>';
                 }
                 
-                // Creamos el placeholder de la biografía para CUALQUIER ítem
                 const placeholderText = `Escribe aquí la "Biografía" o Instrucciones detalladas de tu ${item.name} (Ej: Poco queso, sin pepinillos, la carne bien cocida)`;
-
-
+                
+                // La estructura principal del ítem (AHORA TODOS SON item-complex VISUALMENTE)
+                // Se ocultan las opciones de personalización si el ítem es simple
                 menuHtml += `
                     <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
                         <div class="item-header">
                             <span class="item-title">${item.name} ${topVentaTag}</span>
                             <span class="price">${item.price.toFixed(2)}$</span>
                         </div>
-                        ${optionsHTML}
-                        <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box"></textarea>
-                        <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
+                        
+                        <div class="complex-options-container" style="display:${isComplex ? 'block' : 'none'};">
+                            ${optionsHTML}
+                            <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box"></textarea>
+                        </div>
+                        
+                        <div class="simple-controls-and-box" style="display:${isComplex ? 'none' : 'flex'};">
+                            <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box-simple"></textarea>
+                            
+                            <button class="add-to-cart-btn-simple" onclick="promptAndAddItem('${item.id}', '${item.name}', ${item.price}, this.parentNode.parentNode)">
+                                ➕ Añadir al Pedido
+                            </button>
+                        </div>
+                        
+                        <button class="add-to-cart-btn full-width" style="display:${isComplex ? 'block' : 'none'};" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
                             Añadir ${item.name} al Pedido
                         </button>
                     </div>
@@ -355,6 +373,48 @@ async function loadMenuData() {
     }
 }
 
+/**
+ * Función que simula un modal/prompt para pedir la instrucción del ítem simple.
+ * Añade el ítem con su instrucción al carrito.
+ */
+function promptAndAddItem(id, name, price, itemElement) {
+    const instruction = prompt(`Personaliza tu ${name}:\n\nEscribe aquí cualquier instrucción o biografía (Ej: con poca salsa, sin tomate, bien tostado, etc.).\n\nPresiona Aceptar para añadir al pedido.`);
+
+    if (instruction !== null) {
+        // Creamos un objeto de item simulado para usar addItemWithDetails
+        const simulatedItemElement = {
+            querySelector: (selector) => {
+                if (selector === '.instrucciones-box') {
+                    return { 
+                        value: instruction, // La instrucción capturada del prompt
+                        trim: () => instruction.trim(),
+                        // Necesitamos simular la función de limpieza para que no falle.
+                        value: instruction,
+                        value: '' // Lo dejamos vacío para la limpieza después de la adición
+                    };
+                }
+                if (selector === '.opciones-grupo input[type="checkbox"]') {
+                    return []; // Los ítems simples no tienen checkboxes
+                }
+                return null;
+            },
+            querySelectorAll: (selector) => {
+                 if (selector === '.opciones-grupo input[type="checkbox"]') {
+                    return []; 
+                }
+                return [];
+            },
+            
+            // Pasamos el elemento real en caso de que necesitemos algo de él.
+            parentNode: itemElement 
+        };
+
+        // Usamos la función existente de adición con los datos capturados
+        // Le pasamos un 'simulatedItemElement' para que capture la instrucción y la añada como nota
+        addItemWithDetails(id, name, price, simulatedItemElement);
+    }
+}
+
 
 // --- FUNCIONES DE DISPLAY Y CARRITO ---
 
@@ -378,12 +438,9 @@ function updateCartDisplay() {
     let subtotal = calculateSubtotal();
     let totalItems = Object.keys(cart).length; // Total de ITEMS ÚNICOS en el carrito
     
-    // ELIMINAMOS la lógica de actualizar los contadores +/- en la vista
-    // document.querySelectorAll('.menu-item').forEach(itemEl => { ... });
+    renderCartItems(); 
 
-    
-    renderCartItems(); // Llamada para manejar la visibilidad del contenedor.
-
+    // Aquí eliminamos la lógica de `+/-` que ya no existe.
     
     // Actualiza el badge del contador de ítems
     document.getElementById('cart-item-count').textContent = totalItems;
@@ -465,6 +522,7 @@ function updateCartDisplay() {
 
 
 // --- Lógica de Envío (Incluye GPS y Mesa) ---
+// (MANTENIDA SIN CAMBIOS, ya que la lógica de carrito es la misma que en la versión anterior)
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
