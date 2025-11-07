@@ -16,7 +16,7 @@
         <p id="schedule-container" class="schedule"></p>
     </header>
 
-    <section class="publicidad-container">
+    <section id="videos-section" class="publicidad-container" style="display:none;"> 
         <h2>🔥 ¡Mira Nuestros Videos Promocionales! 🔥</h2>
         <div class="video-gallery">
             <div class="video-item">
@@ -30,7 +30,7 @@
             </div>
             
             <div class="video-item">
-                <h3>El Mejor Sabor Wainer</h3>
+                <h3>El Mejor Sabor Wainer (Clip 1)</h3>
                 <iframe 
                     src="https://www.youtube.com/embed/iAvF6pHmqUs" 
                     frameborder="0" 
@@ -38,12 +38,9 @@
                     allowfullscreen>
                 </iframe>
             </div>
-        </div>
-    </section>
-    <main class="menu-container">
 
-                    <div class="video-item">
-                <h3>El Mejor Sabor Wainer</h3>
+             <div class="video-item">
+                <h3>El Mejor Sabor Wainer (Clip 2)</h3>
                 <iframe 
                     src="https://www.youtube.com/embed/1CXHMDW10zE" 
                     frameborder="0" 
@@ -51,9 +48,15 @@
                     allowfullscreen>
                 </iframe>
             </div>
+
         </div>
+
+        <button id="back-to-menu-btn" onclick="showMenuContent()">
+             ⬅️ Volver al Menú Principal
+        </button>
     </section>
-    <main class="menu-container">
+    
+    <main id="menu-main-content" class="menu-container">
         
         <div id="mesa-info" style="
             background-color: var(--color-wainer-gold); 
@@ -124,4 +127,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
