@@ -75,7 +75,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function getDeliveryCost(distanceKm) {
     const ratePerKm = 1.00;
     const minCost = 1.00;
-    return Math.max(minCost, distanceKm * ratePerKm); 
+    return Math.max(minCost, distanceKm * ratePerKm);
 }
 
 
@@ -198,7 +198,7 @@ function calculateDeliveryFee(callback) {
                 
                 const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
                 
-                deliveryFee = getDeliveryCost(distanceKm); 
+                deliveryFee = getDeliveryCost(distanceKm);
                 deliveryCalculated = true; // Establecer flag
 
                 loadingMessage.style.display = 'none';
@@ -212,12 +212,12 @@ function calculateDeliveryFee(callback) {
                 
                 // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
                 deliveryFee = 0;
-                deliveryCalculated = false; 
+                deliveryCalculated = false;
 
                 loadingMessage.style.display = 'none';
                 checkoutBtn.disabled = false;
                 
-                if (callback) callback(0, 0, 0, 0); 
+                if (callback) callback(0, 0, 0, 0);
                 updateCartDisplay(); // Forzar actualización del total con el error
             }
         );
@@ -230,7 +230,7 @@ function calculateDeliveryFee(callback) {
         loadingMessage.style.display = 'none';
         checkoutBtn.disabled = false;
         
-        if (callback) callback(0, 0, 0, 0); 
+        if (callback) callback(0, 0, 0, 0);
         updateCartDisplay(); // Forzar actualización del total con el error
     }
 }
@@ -247,7 +247,7 @@ function handleDeliveryToggle() {
         deliveryFee = 0;
         deliveryCalculated = false;
         loadingMessage.style.display = 'none';
-        updateCartDisplay(); 
+        updateCartDisplay();
     }
 }
 
@@ -292,7 +292,7 @@ async function loadMenuData() {
         } else {
             currentMesa = null;
             if (orderOptionsEl) { 
-                orderOptionsEl.style.display = 'flex'; 
+                orderOptionsEl.style.display = 'flex';
             }
         }
         
@@ -392,36 +392,16 @@ async function loadMenuData() {
 
 function renderCartItems() {
     const cartContainer = document.getElementById('cart-items-container');
-    let cartHtml = '';
     let totalItemsInCart = Object.keys(cart).length;
 
     if (totalItemsInCart === 0) {
-        cartContainer.innerHTML = '<p class="empty-cart-message">Tu pedido está vacío. ¡Comienza a añadir!</p>';
         cartContainer.style.display = 'none';
         return;
     }
     
-    cartContainer.style.display = 'block';
-    cartHtml += '<h3 class="cart-title">📝 Detalle de tu Pedido:</h3>';
-
-    for (const uniqueId in cart) {
-        const item = cart[uniqueId];
-        const itemQty = item.isSimple ? item.quantity : 1; 
-
-        cartHtml += `
-            <div class="cart-item-detail">
-                <span class="cart-item-qty">${itemQty}x</span>
-                <span class="cart-item-name">${item.name}</span>
-                <span class="cart-item-price">${(item.price * itemQty).toFixed(2)}$}</span>
-                <button class="remove-item-btn" 
-                        onclick="removeItemFromCart('${uniqueId}')">
-                    ❌
-                </button>
-            </div>
-        `;
-    }
-    
-    cartContainer.innerHTML = cartHtml;
+    // Ocultar el detalle y no generar HTML para simplificar la interfaz.
+    cartContainer.innerHTML = ''; 
+    cartContainer.style.display = 'none'; 
 }
 
 function updateCartDisplay() {
@@ -434,7 +414,7 @@ function updateCartDisplay() {
         totalItems += cart[uniqueId].quantity;
     }
     
-    renderCartItems(); 
+    renderCartItems(); // Llamada para manejar la visibilidad del contenedor.
 
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
@@ -447,7 +427,7 @@ function updateCartDisplay() {
     document.getElementById('cart-item-count').style.display = totalItems > 0 ? 'inline-block' : 'none';
 
 
-    const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked; 
+    const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked;
     
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
@@ -535,7 +515,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         const itemName = item.name;
         const itemPrice = item.price * itemQty;
 
-        message += `${index}. *${itemQty}x* ${itemName} = ${itemPrice.toFixed(2)}$\n`; 
+        message += `${index}. *${itemQty}x* ${itemName} = ${itemPrice.toFixed(2)}$\n`;
         index++;
     }
 
@@ -648,7 +628,7 @@ function checkAndSendOrder() {
 
     // Si es una mesa, saltamos la verificación de Delivery y Geolocalización.
     if (currentMesa) {
-        sendOrder(subtotal, subtotal, 0, 0, 0); 
+        sendOrder(subtotal, subtotal, 0, 0, 0);
         return;
     }
     
@@ -656,7 +636,7 @@ function checkAndSendOrder() {
     const isDelivery = document.getElementById('delivery-checkbox').checked;
 
     if (!isDelivery) {
-        sendOrder(subtotal, subtotal, 0, 0, 0); 
+        sendOrder(subtotal, subtotal, 0, 0, 0);
         return;
     }
     
