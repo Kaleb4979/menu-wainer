@@ -34,11 +34,15 @@
                 <label for="delivery-checkbox">
                     🚚 ¿Desea Delivery?
                 </label>
-                <input type="checkbox" id="delivery-checkbox" onchange="updateCartDisplay()">
+                <input type="checkbox" id="delivery-checkbox" onchange="handleDeliveryToggle()">
             </div>
             <div id="delivery-details" class="delivery-info">
                 Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)
             </div>
+        </div>
+        
+        <div id="search-container" class="search-container">
+            <input type="text" id="search-input" placeholder="🔍 Buscar tu plato favorito (Ej: Whopper, Papas, Pollo)">
         </div>
         
         <div id="loading-location" class="loading-message" style="display:none;">
@@ -70,4 +74,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
