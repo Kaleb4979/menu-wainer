@@ -210,18 +210,42 @@ function calculateDeliveryFee(callback) {
                 updateCartDisplay(); // Forzar actualización del total
             },
             (error) => {
+                // ESTA PARTE ES LA CLAVE: Manejo de errores más claro para el usuario.
                 console.error('Error de geolocalización:', error);
                 
+                let errorMessage = 'Error: No se pudo obtener la ubicación.';
+                if (error.code === 1) {
+                    errorMessage = 'Permiso denegado. Active la ubicación para calcular el delivery.';
+                } else if (error.code === 2) {
+                    errorMessage = 'Ubicación no disponible (GPS/WiFi apagado).';
+                } else if (error.code === 3) {
+                    errorMessage = 'La búsqueda de ubicación ha tardado demasiado.';
+                }
+
                 // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
                 deliveryFee = 0;
                 deliveryCalculated = false; 
 
-                loadingMessage.style.display = 'none';
-                checkoutBtn.disabled = false;
+                loadingMessage.textContent = `❌ ${errorMessage} Costo de Delivery: 0.00$`;
+                loadingMessage.style.display = 'block';
+                
+                // Revertir el estado visual para permitir el pedido manual
+                setTimeout(() => {
+                    loadingMessage.style.display = 'none';
+                    checkoutBtn.disabled = totalItems === 0;
+                    checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${calculateSubtotal().toFixed(2)}$`;
+                }, 5000); 
                 
                 if (callback) callback(0, 0, 0, 0); 
                 updateCartDisplay(); // Forzar actualización del total con el error
+            },
+            // >>> OPCIONES AÑADIDAS PARA MEJORAR LA FIABILIDAD DE LA UBICACIÓN <<<
+            {
+                enableHighAccuracy: true,
+                timeout: 7000, 
+                maximumAge: 0
             }
+            // >>> FIN OPCIONES AÑADIDAS <<<
         );
     } else {
         console.error('Geolocalización no soportada.');
@@ -229,9 +253,15 @@ function calculateDeliveryFee(callback) {
         deliveryFee = 0;
         deliveryCalculated = false;
 
-        loadingMessage.style.display = 'none';
-        checkoutBtn.disabled = false;
+        loadingMessage.textContent = 'Geolocalización no soportada por su dispositivo.';
+        loadingMessage.style.display = 'block';
         
+        // Revertir el estado visual
+        setTimeout(() => {
+            loadingMessage.style.display = 'none';
+            checkoutBtn.disabled = false;
+        }, 5000);
+
         if (callback) callback(0, 0, 0, 0); 
         updateCartDisplay(); // Forzar actualización del total con el error
     }
@@ -243,6 +273,8 @@ function handleDeliveryToggle() {
     
     if (isDelivery) {
         // Al marcar, intentar calcular
+        loadingMessage.textContent = 'Obteniendo tu ubicación para calcular el costo... Por favor, acepta el permiso.';
+        loadingMessage.style.display = 'block';
         calculateDeliveryFee(() => {});
     } else {
         // Al desmarcar, resetear valores
@@ -433,6 +465,7 @@ function updateCartDisplay() {
     
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
+    const loadingMessage = document.getElementById('loading-location'); // Asegúrate de tener esta referencia
 
     // Deshabilitación por Límite de tiempo (Barra de Cooldown)
     const lastOrderTime = localStorage.getItem('lastOrderTime');
@@ -443,7 +476,9 @@ function updateCartDisplay() {
     const cooldownFill = document.getElementById('cooldown-fill');
     const cooldownText = document.getElementById('cooldown-text');
     
+    let isCooldownActive = false;
     if (lastOrderTime && (now - lastOrderTime) < (COOLDOWN_SECS * 1000)) {
+        isCooldownActive = true;
         checkoutBtn.disabled = true;
         cooldownBar.style.display = 'flex'; // Mostrar la barra
         checkoutBtn.style.visibility = 'hidden'; // Ocultar el botón base
@@ -468,37 +503,46 @@ function updateCartDisplay() {
     
     if (currentMesa) {
         deliveryDetails.textContent = "";
-        if (totalItems > 0 && !checkoutBtn.disabled) {
+        loadingMessage.style.display = 'none';
+        if (totalItems > 0 && !isCooldownActive) {
             checkoutBtn.textContent = `Hacer Pedido MESA ${currentMesa} - Total: ${currentTotal.toFixed(2)}$`;
         }
     } else if (isDelivery) {
         
         if (deliveryCalculated) {
+            loadingMessage.style.display = 'none'; // Ocultar si ya calculó
             currentTotal += deliveryFee;
             deliveryDetails.textContent = `✅ Costo de Delivery calculado: ${deliveryFee.toFixed(2)}$`;
             document.getElementById('cart-total-price').textContent = currentTotal.toFixed(2);
             
-            if (totalItems > 0 && !checkoutBtn.disabled) {
+            if (totalItems > 0 && !isCooldownActive) {
                  checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - TOTAL: ${currentTotal.toFixed(2)}$`;
             }
             
         } else {
-             deliveryDetails.textContent = "⏳ Calculando costo de Delivery... Por favor, acepte el permiso de ubicación.";
+             // Dejar que la función calculateDeliveryFee maneje el mensaje de carga o error
+             if (loadingMessage.style.display !== 'block') { // Si no está mostrando el mensaje de carga/error
+                deliveryDetails.textContent = "Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)";
+             }
              
-             if (totalItems > 0 && !checkoutBtn.disabled) {
+             if (totalItems > 0 && !isCooldownActive) {
                  checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Subtotal: ${subtotal.toFixed(2)}$`;
              }
         }
     } else {
+        loadingMessage.style.display = 'none'; // Ocultar si es Retiro
         deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
         
-        if (totalItems > 0 && !checkoutBtn.disabled) {
+        if (totalItems > 0 && !isCooldownActive) {
             checkoutBtn.textContent = `Hacer Pedido (${totalItems} ítems) - Total: ${subtotal.toFixed(2)}$`;
         }
     }
 
     if (totalItems === 0) {
         document.getElementById('cart-total-price').textContent = "0.00";
+        if (!isCooldownActive) {
+             checkoutBtn.textContent = "Hacer Pedido por WhatsApp";
+        }
     }
 }
 
@@ -538,8 +582,8 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
-    // Corrected Google Maps URL using a standard format that works with coordinates
-    const mapsUrl = distanceKm > 0 ? `http://maps.google.com/?q=${lat},${lon}` : "N/A";
+    // Se ha corregido la URL de Google Maps para que sea más estándar y funcione correctamente
+    const mapsUrl = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
         message += `📍 *ORDEN DE MESA N°: ${currentMesa}*\n`;
@@ -548,7 +592,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         
     } else if (isDelivery) {
         
-        if (distanceKm > 0) {
+        if (distanceKm > 0 && lat && lon) {
             const deliveryCost = finalTotal - subtotal;
             
             message += `✅ *SERVICIO:* DELIVERY 🚚\n`;
@@ -576,7 +620,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
     // ----------------------------------------------------
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
-    const mapsUrlForLog = distanceKm > 0 ? `http://maps.google.com/?q=${lat},${lon}` : "N/A";
+    const mapsUrlForLog = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
 
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
@@ -672,7 +716,7 @@ function checkAndSendOrder() {
 
     } else {
         // Si no se pudo calcular (por error de GPS), enviamos con costo 0 y advertencia.
-        alert("No se pudo calcular el costo de envío (permiso de GPS denegado o no soportado). El costo se calculará a la entrega.");
+        alert("No se pudo obtener la ubicación (permiso denegado, GPS apagado o timeout). El costo de envío se calculará a la entrega.");
         sendOrder(subtotal, subtotal, 0, 0, 0); // Envío pendiente (costo 0)
     }
 }
