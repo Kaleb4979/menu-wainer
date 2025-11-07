@@ -6,8 +6,8 @@ let ALL_ITEMS_MAP = {};
 let cart = {}; 
 let currentMesa = null; 
 let deliveryFee = 0;
-let deliveryCalculated = false; // Flag para evitar recalcular
-let userLocation = null;
+let deliveryCalculated = false; // Flag: ¿Se logró calcular el costo de delivery con éxito?
+let userLocation = { lat: 0, lon: 0, distanceKm: 0 }; // Almacena la última ubicación exitosa
 
 // >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<
 const LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp2udcJbugOI995I80QI18eME0tJ-BMlUOq2xqEuAT_6n2Gijnn/exec'; 
@@ -15,7 +15,7 @@ const LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp
 
 // --- Funciones de Utilidad ---
 
-// --- LÓGICA DE BÚSQUEDA (Idea #1) ---
+// --- LÓGICA DE BÚSQUEDA ---
 function filterMenu() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
     const categories = document.querySelectorAll('.menu-category');
@@ -27,7 +27,6 @@ function filterMenu() {
         let itemFound = false;
 
         items.forEach(item => {
-            // Asegura que busca el título del ítem, independientemente de si es simple o complejo
             const itemTitleEl = item.querySelector('.item-title') || item.querySelector('.item-info');
             const itemName = itemTitleEl ? itemTitleEl.textContent.toLowerCase() : '';
 
@@ -39,7 +38,6 @@ function filterMenu() {
             }
         });
 
-        // Oculta la categoría si no coincide el nombre y ningún ítem es visible
         if (searchTerm !== '' && !categoryMatches && !itemFound) {
             category.classList.add('hidden');
         } else {
@@ -81,7 +79,6 @@ function getDeliveryCost(distanceKm) {
 
 // --- LÓGICA DE CARRO: Dos modos de añadir ---
 
-// 1. MODO SIMPLE (+/-): Para ítems sin personalización (Pan Salchicha, etc.)
 function updateCart(itemId, change) {
     const itemData = ALL_ITEMS_MAP[itemId];
     if (!itemData || itemData.options) return;
@@ -94,7 +91,6 @@ function updateCart(itemId, change) {
     if (newQuantity === 0) {
         delete cart[itemId];
     } else {
-        // En items simples, el ID de carrito es el ID del producto
         cart[itemId] = {
             id: itemId, 
             name: itemData.name,
@@ -108,7 +104,6 @@ function updateCart(itemId, change) {
     updateCartDisplay();
 }
 
-// 2. MODO COMPLEJO (Añadir al Pedido): Para ítems con personalización (Whopper, etc.)
 function addItemWithDetails(id, name, price, itemElement) {
     let details = [];
     
@@ -127,7 +122,6 @@ function addItemWithDetails(id, name, price, itemElement) {
     }
 
     const itemDetails = details.length > 0 ? ` (${details.join(', ')})` : '';
-    // Crea ID único para que cada personalización sea un ítem separado
     const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const itemName = name + itemDetails;
 
@@ -136,12 +130,11 @@ function addItemWithDetails(id, name, price, itemElement) {
         name: itemName, 
         price: price, 
         basePrice: price,
-        quantity: 1, // Siempre 1 unidad por cada ítem personalizado
+        quantity: 1, 
         isSimple: false, 
         baseId: id 
     };
     
-    // Limpieza de interfaz
     if (notesBox) {
         notesBox.value = '';
     }
@@ -156,7 +149,6 @@ function addItemWithDetails(id, name, price, itemElement) {
     updateCartDisplay();
 }
 
-// 3. FUNCIÓN DE ELIMINACIÓN ÚNICA (solo necesaria para ítems complejos/personalizados)
 function removeItemFromCart(uniqueId) {
     if (cart[uniqueId]) {
         delete cart[uniqueId];
@@ -165,7 +157,7 @@ function removeItemFromCart(uniqueId) {
 }
 
 
-// --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY ---
+// --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY (CON CORRECCIÓN DE ASINCRONÍA) ---
 
 function calculateDeliveryFee(callback) {
     if (!MENU_DATA) {
@@ -175,17 +167,10 @@ function calculateDeliveryFee(callback) {
 
     const checkoutBtn = document.getElementById('checkout-btn');
     const loadingMessage = document.getElementById('loading-location');
-    loadingMessage.style.display = 'block';
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Calculando envío...';
     
-    // Si ya fue calculado, simplemente actualizamos la vista
-    if (deliveryCalculated) {
-        const subtotal = calculateSubtotal();
-        const finalTotal = subtotal + deliveryFee;
-        loadingMessage.style.display = 'none';
-        checkoutBtn.disabled = false;
-        if (callback) callback(deliveryFee, 0, 0, 0); // No necesitamos pasar lat/lon/dist en este caso
+    // Si ya fue calculado con éxito, usamos los datos guardados
+    if (deliveryCalculated && !callback) {
+        updateCartDisplay(); 
         return;
     }
 
@@ -202,13 +187,14 @@ function calculateDeliveryFee(callback) {
                 const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
                 
                 deliveryFee = getDeliveryCost(distanceKm); 
-                deliveryCalculated = true; // Establecer flag
+                deliveryCalculated = true; 
+                userLocation = { lat: clientLat, lon: clientLon, distanceKm: distanceKm };
 
                 loadingMessage.style.display = 'none';
                 checkoutBtn.disabled = false;
                 
                 if (callback) callback(deliveryFee, distanceKm, clientLat, clientLon);
-                updateCartDisplay(); // Forzar actualización del total
+                updateCartDisplay(); 
             },
             (error) => {
                 // RUTA DE ERROR
@@ -216,57 +202,49 @@ function calculateDeliveryFee(callback) {
                 
                 let errorMessage = 'Error: No se pudo obtener la ubicación.';
                 if (error.code === 1) {
-                    errorMessage = 'PERMISO DENEGADO. Por favor, revisa el icono del candado en la URL y recarga.';
+                    errorMessage = 'PERMISO DENEGADO. Por favor, habilite la ubicación en su navegador.';
                 } else if (error.code === 2) {
-                    errorMessage = 'Ubicación no disponible. ¿Están encendidos el GPS/Servicios de Ubicación?';
+                    errorMessage = 'Ubicación no disponible.';
                 } else if (error.code === 3) {
-                    errorMessage = 'Tiempo de espera agotado. Mala conexión o señal GPS débil.';
-                }
-                // Adicional: En caso de que el error.code sea nulo o indefinido:
-                if (!error.code && error.message) {
-                    errorMessage = `Error interno: ${error.message}`;
+                    errorMessage = 'Tiempo de espera agotado.';
                 }
 
-
-                // Fallo: usar 0 costo y no marcar como calculado para intentarlo de nuevo
+                // Fallo: usar 0 costo y no marcar como calculado
                 deliveryFee = 0;
                 deliveryCalculated = false; 
+                userLocation = { lat: 0, lon: 0, distanceKm: 0 };
 
                 loadingMessage.textContent = `❌ ${errorMessage} Costo de Delivery: 0.00$`;
                 loadingMessage.style.display = 'block';
                 
-                // Asegurar que el botón de checkout se rehabilita con el mensaje de advertencia
-                setTimeout(() => {
-                    loadingMessage.style.display = 'none';
-                    // Rehabilita el botón si hay items en el carrito
-                    checkoutBtn.disabled = calculateSubtotal() === 0; 
-                    updateCartDisplay(); // Forzar actualización del total y del botón
-                }, 5000); 
-                
-                if (callback) callback(0, 0, 0, 0); 
-                updateCartDisplay(); // Forzar actualización del total con el error
+                // Si la llamada viene de checkAndSendOrder, necesitamos notificar el fallo
+                if (callback) {
+                    callback(0, 0, 0, 0); 
+                } else {
+                    // Si viene del toggle, rehabilita el botón después de 5s
+                    setTimeout(() => {
+                        loadingMessage.style.display = 'none';
+                        checkoutBtn.disabled = calculateSubtotal() === 0; 
+                        updateCartDisplay();
+                    }, 5000); 
+                }
+                updateCartDisplay(); 
             },
-            // >>> OPCIONES AÑADIDAS PARA MEJORAR LA FIABILIDAD DE LA UBICACIÓN <<<
             {
                 enableHighAccuracy: true,
                 timeout: 7000, 
                 maximumAge: 0
             }
-            // >>> FIN OPCIONES AÑADIDAS <<<
         );
     } else {
         // RUTA DE NAVEGADOR SIN SOPORTE
-        console.error('Geolocalización no soportada.');
-        
         deliveryFee = 0;
         deliveryCalculated = false;
-
         loadingMessage.textContent = 'Geolocalización no soportada por su dispositivo.';
         loadingMessage.style.display = 'block';
         
         setTimeout(() => {
             loadingMessage.style.display = 'none';
-            checkoutBtn.disabled = false;
         }, 5000);
 
         if (callback) callback(0, 0, 0, 0); 
@@ -279,14 +257,14 @@ function handleDeliveryToggle() {
     const loadingMessage = document.getElementById('loading-location');
     
     if (isDelivery) {
-        // Al marcar, intentar calcular
         loadingMessage.textContent = 'Obteniendo tu ubicación para calcular el costo... Por favor, acepta el permiso.';
         loadingMessage.style.display = 'block';
-        calculateDeliveryFee(() => {});
+        // Calcular sin callback para que solo actualice el display (proactivo)
+        calculateDeliveryFee(null); 
     } else {
-        // Al desmarcar, resetear valores
         deliveryFee = 0;
         deliveryCalculated = false;
+        userLocation = { lat: 0, lon: 0, distanceKm: 0 };
         loadingMessage.style.display = 'none';
         updateCartDisplay(); 
     }
@@ -294,7 +272,6 @@ function handleDeliveryToggle() {
 
 // ------------------------------------
 
-// Utility function to calculate subtotal
 function calculateSubtotal() {
     let subtotal = 0;
     for (const uniqueId in cart) {
@@ -313,23 +290,20 @@ async function loadMenuData() {
         const data = await response.json();
         MENU_DATA = data;
         
-        // >> LÓGICA DE DETECCIÓN DE MESA <<
+        // LÓGICA DE MESA
         const mesaParam = getUrlParameter('mesa');
         const orderOptionsEl = document.querySelector('.order-options');
         const mesaInfoEl = document.getElementById('mesa-info');
         
         if (mesaParam && !isNaN(parseInt(mesaParam))) {
             currentMesa = parseInt(mesaParam);
-            
             if (mesaInfoEl) { 
                 mesaInfoEl.style.display = 'block';
                 mesaInfoEl.textContent = `¡Estás pidiendo desde la MESA N° ${currentMesa}! Tu pedido es para comer en local.`;
             }
-            
             if (orderOptionsEl) { 
                 orderOptionsEl.style.display = 'none';
             }
-            
         } else {
             currentMesa = null;
             if (orderOptionsEl) { 
@@ -337,7 +311,7 @@ async function loadMenuData() {
             }
         }
         
-        // 1. Inicializar el mapa de ítems y poblar la información del header
+        // RENDERIZADO DEL MENÚ
         document.getElementById('promo-container').textContent = data.info.promo;
         document.getElementById('schedule-container').innerHTML = `🕔 **HORARIO DE ATENCIÓN:** ${data.info.schedule}`;
         
@@ -352,13 +326,10 @@ async function loadMenuData() {
 
             category.items.forEach(item => {
                 ALL_ITEMS_MAP[item.id] = item;
-                
                 const topVentaTag = item.top_venta ? '<span class="top-venta-tag">⭐ TOP VENTA</span>' : '';
-                
                 const isComplex = item.options && item.options.length > 0;
                 
                 if (isComplex) {
-                    // --- GENERACIÓN DE ITEM COMPLEJO (Botón Añadir + Opciones) ---
                     let optionsHTML = '';
                     let placeholderText = 'Instrucciones Especiales: (Ej: Poco queso, sin lechuga)';
 
@@ -391,7 +362,6 @@ async function loadMenuData() {
                     `;
 
                 } else {
-                    // --- GENERACIÓN DE ITEM SIMPLE (Botones +/-) ---
                     menuHtml += `
                         <div class="menu-item" data-id="${item.id}">
                             <span class="item-info">${item.name} ${topVentaTag}</span>
@@ -433,14 +403,8 @@ async function loadMenuData() {
 
 function renderCartItems() {
     const cartContainer = document.getElementById('cart-items-container');
-    let cartHtml = '';
-    let totalItemsInCart = Object.keys(cart).length;
-
-    // Ya que pediste ocultar el detalle, solo lo mantenemos oculto y no generamos su contenido.
     cartContainer.style.display = 'none';
     cartContainer.innerHTML = '';
-    
-    // El resto de la lógica de renderizado detallado (si se necesitaba) va aquí, pero lo omitimos.
 }
 
 function updateCartDisplay() {
@@ -449,21 +413,18 @@ function updateCartDisplay() {
     let subtotal = calculateSubtotal();
     let totalItems = 0;
     
-    // Contar items: Los simples por cantidad, los complejos por item único
     for (const uniqueId in cart) {
         totalItems += cart[uniqueId].quantity;
     }
     
     renderCartItems(); 
 
-    // Actualiza los contadores de ítems simples
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
         const quantityElement = itemEl.querySelector('.item-quantity');
         quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
     });
     
-    // Actualiza el badge del contador de ítems
     document.getElementById('cart-item-count').textContent = totalItems;
     document.getElementById('cart-item-count').style.display = totalItems > 0 ? 'inline-block' : 'none';
 
@@ -472,13 +433,12 @@ function updateCartDisplay() {
     
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
-    const loadingMessage = document.getElementById('loading-location'); // Asegúrate de tener esta referencia
+    const loadingMessage = document.getElementById('loading-location'); 
 
-    // Deshabilitación por Límite de tiempo (Barra de Cooldown)
+    // Lógica de Cooldown
     const lastOrderTime = localStorage.getItem('lastOrderTime');
     const now = Date.now();
     const COOLDOWN_SECS = MENU_DATA.info.cooldown_seconds;
-    
     const cooldownBar = document.getElementById('cooldown-bar');
     const cooldownFill = document.getElementById('cooldown-fill');
     const cooldownText = document.getElementById('cooldown-text');
@@ -487,8 +447,8 @@ function updateCartDisplay() {
     if (lastOrderTime && (now - lastOrderTime) < (COOLDOWN_SECS * 1000)) {
         isCooldownActive = true;
         checkoutBtn.disabled = true;
-        cooldownBar.style.display = 'flex'; // Mostrar la barra
-        checkoutBtn.style.visibility = 'hidden'; // Ocultar el botón base
+        cooldownBar.style.display = 'flex'; 
+        checkoutBtn.style.visibility = 'hidden'; 
         
         const elapsedSeconds = (now - lastOrderTime) / 1000;
         const remainingSeconds = Math.ceil(COOLDOWN_SECS - elapsedSeconds);
@@ -498,8 +458,8 @@ function updateCartDisplay() {
         cooldownText.textContent = `ESPERA: ${remainingSeconds}s para nuevo pedido`;
         
     } else {
-        cooldownBar.style.display = 'none'; // Ocultar la barra
-        checkoutBtn.style.visibility = 'visible'; // Mostrar el botón base
+        cooldownBar.style.display = 'none'; 
+        checkoutBtn.style.visibility = 'visible'; 
         checkoutBtn.disabled = totalItems === 0;
     }
 
@@ -517,9 +477,10 @@ function updateCartDisplay() {
     } else if (isDelivery) {
         
         if (deliveryCalculated) {
-            loadingMessage.style.display = 'none'; // Ocultar si ya calculó
+            // Si el cálculo fue exitoso, muestra el costo final
+            loadingMessage.style.display = 'none'; 
             currentTotal += deliveryFee;
-            deliveryDetails.textContent = `✅ Costo de Delivery calculado: ${deliveryFee.toFixed(2)}$`;
+            deliveryDetails.textContent = `✅ Costo de Delivery calculado: ${deliveryFee.toFixed(2)}$ (a ${userLocation.distanceKm.toFixed(2)} km)`;
             document.getElementById('cart-total-price').textContent = currentTotal.toFixed(2);
             
             if (totalItems > 0 && !isCooldownActive) {
@@ -527,9 +488,9 @@ function updateCartDisplay() {
             }
             
         } else {
-             // Dejar que la función calculateDeliveryFee maneje el mensaje de carga o error
-             if (loadingMessage.style.display !== 'block') { // Si no está mostrando el mensaje de carga o error
-                deliveryDetails.textContent = "Seleccione Delivery para calcular el costo. (1$ por km, mínimo 1$)";
+             // Si el cálculo falló o está pendiente, muestra el subtotal
+             if (loadingMessage.style.display !== 'block') { 
+                deliveryDetails.textContent = "Costo de Delivery se calculará al confirmar la ubicación. (1$ por km, mínimo 1$)";
              }
              
              if (totalItems > 0 && !isCooldownActive) {
@@ -537,7 +498,7 @@ function updateCartDisplay() {
              }
         }
     } else {
-        loadingMessage.style.display = 'none'; // Ocultar si es Retiro
+        loadingMessage.style.display = 'none'; 
         deliveryDetails.textContent = "Retiro en Tienda seleccionado.";
         
         if (totalItems > 0 && !isCooldownActive) {
@@ -554,29 +515,36 @@ function updateCartDisplay() {
 }
 
 
-// --- Lógica de Envío (Incluye GPS y Mesa) ---
+// --- Lógica de Envío Final (Envío a WhatsApp y Log) ---
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
     const isDelivery = !currentMesa && document.getElementById('delivery-checkbox').checked;
-    let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
     
-    let index = 1;
-    // MODO REVERTIDO: Agrupa ítems simples, lista ítems complejos por separado
+    // ETIQUETADO DE PRIORIDAD PARA WHATSAPP
+    let serviceTag = "[RETIRO] 🚶"; 
+    if (currentMesa) {
+        serviceTag = `[MESA-${currentMesa}] 🍽️`;
+    } else if (isDelivery) {
+        serviceTag = "[DELIVERY] 🚚";
+    }
+    
+    let message = `🛒 *NUEVO PEDIDO PA QUE WAINER* ${serviceTag}\n\n`;
+    
+    // AGRUPACIÓN DE ITEMS SIMPLES PARA CLARIDAD DEL MENSAJE
     const consolidatedCart = {};
 
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
         if (item.isSimple) {
-            // Agrupar ítems simples
             consolidatedCart[item.id] = consolidatedCart[item.id] || { name: item.name, quantity: 0, price: item.price };
             consolidatedCart[item.id].quantity += item.quantity;
         } else {
-            // Ítems complejos/personalizados se listan individualmente
             consolidatedCart[uniqueId] = item;
         }
     }
 
+    let index = 1;
     for (const id in consolidatedCart) {
         const item = consolidatedCart[id];
         const itemQty = item.quantity;
@@ -589,8 +557,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     message += "\n----------------------------------\n";
     
-    // *** CORRECCIÓN APLICADA AQUÍ ***
-    // Formato de URL de Google Maps para que sea funcional en WhatsApp
+    // Formato de URL de Google Maps (funcional para log y mensaje)
     const mapsUrl = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
@@ -612,7 +579,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             
         } else {
             message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
-            message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación o fue rechazada. El costo de delivery se calculará a la entrega.\n`;
+            message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación. El costo de delivery se calculará a la entrega.\n`;
             message += `\n*TOTAL A PAGAR (Comida):* ${subtotal.toFixed(2)}$\n`;
         }
     } else {
@@ -625,10 +592,10 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
     
     // ----------------------------------------------------
-    // >> LÓGICA DE REGISTRO EN GOOGLE SHEETS/API <<
+    // LÓGICA DE REGISTRO EN GOOGLE SHEETS
     // ----------------------------------------------------
     const serviceType = currentMesa ? `Mesa N° ${currentMesa}` : (isDelivery ? 'Delivery' : 'Retiro en Tienda');
-    const mapsUrlForLog = (lat && lon) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : "N/A";
+    const mapsUrlForLog = (lat && lon) ? mapsUrl : "N/A";
 
     const logData = {
         fecha: new Date().toLocaleDateString('es-VE'),
@@ -636,12 +603,10 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         total: finalTotal.toFixed(2),
         servicio: serviceType,
         distancia: distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "N/A",
-        // Concatenar los detalles de los ítems en un formato legible
         detalle_pedido: Object.values(consolidatedCart).map(item => `${item.quantity}x ${item.name}`).join('; '),
         ubicacion_url: mapsUrlForLog
     };
 
-    // Envía los datos de forma asíncrona a tu endpoint (Google Apps Script)
     fetch(LOG_ENDPOINT, {
         method: 'POST',
         mode: 'no-cors', 
@@ -651,15 +616,13 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         body: JSON.stringify(logData)
     })
     .then(response => {
-        // La consola indicará que se intentó enviar, incluso con 'no-cors'
         console.log("Datos de pedido enviados para registro.");
     })
     .catch(error => console.error('Error al intentar registrar el pedido:', error));
     
     // ----------------------------------------------------
-    // >> FIN LÓGICA DE REGISTRO <<
+    // APERTURA DE WHATSAPP
     // ----------------------------------------------------
-
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${MENU_DATA.info.whatsapp_number}?text=${encodedMessage}`;
@@ -670,6 +633,10 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
 
     cart = {};
     updateCartDisplay();
+    
+    // Restablece los mensajes de carga y botón después de enviar
+    document.getElementById('loading-location').style.display = 'none';
+    document.getElementById('checkout-btn').disabled = true;
 }
 
 function checkAndSendOrder() {
@@ -694,13 +661,13 @@ function checkAndSendOrder() {
         return;
     }
 
-    // Si es una mesa, saltamos la verificación de Delivery y Geolocalización.
+    // MESA (Opción A)
     if (currentMesa) {
         sendOrder(subtotal, subtotal, 0, 0, 0);
         return;
     }
     
-    // Si NO es una mesa, revisamos si es Delivery o Retiro.
+    // RETIRO (Opción B)
     const isDelivery = document.getElementById('delivery-checkbox').checked;
 
     if (!isDelivery) {
@@ -708,25 +675,25 @@ function checkAndSendOrder() {
         return;
     }
     
-    // Si es Delivery, usamos el cálculo previamente hecho o lo hacemos ahora.
-    if (deliveryCalculated) {
-        
-        const checkoutBtn = document.getElementById('checkout-btn');
-        checkoutBtn.disabled = true;
-        checkoutBtn.textContent = 'Procesando pedido...';
-        
-        // Recalculamos la ubicación final para tener lat/lon/dist exactos para el WhatsApp y el registro
-        calculateDeliveryFee((fee, distanceKm, clientLat, clientLon) => {
-             const final = subtotal + fee;
-             sendOrder(subtotal, final, distanceKm, clientLat, clientLon);
-             // El botón se rehabilita al final de sendOrder
-        });
+    // DELIVERY (Opción C - Requiere Geolocalización Asíncrona)
+    
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const loadingMessage = document.getElementById('loading-location');
+    
+    // Bloquear UI y mostrar mensaje
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Calculando ubicación...';
+    loadingMessage.style.display = 'block';
+    loadingMessage.textContent = 'Obteniendo tu ubicación para calcular el costo... Por favor, acepta el permiso.';
 
-    } else {
-        // Si no se pudo calcular (por error de GPS), enviamos con costo 0 y advertencia.
-        alert("No se pudo obtener la ubicación (permiso denegado, GPS apagado o timeout). El costo de envío se calculará a la entrega.");
-        sendOrder(subtotal, subtotal, 0, 0, 0); // Envío pendiente (costo 0)
-    }
+    // Llama a la función de cálculo con un callback que llama a sendOrder SÓLO cuando termina.
+    calculateDeliveryFee((fee, distanceKm, clientLat, clientLon) => {
+        
+        const final = subtotal + fee;
+        sendOrder(subtotal, final, distanceKm, clientLat, clientLon);
+        
+        // El botón se rehabilita al final de sendOrder (aunque el carrito se vacía)
+    });
 }
 
 document.addEventListener('DOMContentLoaded', loadMenuData);
