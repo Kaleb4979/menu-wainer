@@ -9,7 +9,7 @@ let deliveryFee = 0;
 let deliveryCalculated = false; // Flag para evitar recalcular
 let userLocation = null;
 
-// >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<\
+// >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<
 const LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp2udcJbugOI995I80QI18eME0tJ-BMlUOq2xqEuAT_6n2Gijnn/exec'; 
 // =================================================================
 
@@ -22,13 +22,12 @@ function filterMenu() {
 
     categories.forEach(category => {
         const categoryName = category.querySelector('h2').textContent.toLowerCase();
-        // Ahora todos los ítems tienen la clase .menu-item-complex
-        const items = category.querySelectorAll('.menu-item-complex');
+        const items = category.querySelectorAll('.menu-item, .menu-item-complex');
         let categoryMatches = categoryName.includes(searchTerm);
         let itemFound = false;
 
         items.forEach(item => {
-            // Asegura que busca el título del ítem
+            // Asegura que busca el título del ítem, independientemente de si es simple o complejo
             const itemTitleEl = item.querySelector('.item-title') || item.querySelector('.item-info');
             const itemName = itemTitleEl ? itemTitleEl.textContent.toLowerCase() : '';
 
@@ -76,42 +75,43 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function getDeliveryCost(distanceKm) {
     const ratePerKm = 1.00;
     const minCost = 1.00;
-    return Math.max(minCost, distanceKm * ratePerKm);
+    return Math.max(minCost, distanceKm * ratePerKm); 
 }
 
-// --- LÓGICA DE INTERFAZ: Plegar/Desplegar Personalización ---
 
-function togglePersonalization(buttonElement) {
-    // Obtener el contenedor principal del ítem
-    const itemContainer = buttonElement.closest('.menu-item-complex');
-    // Encontrar el área de contenido plegable
-    const content = itemContainer.querySelector('.personalization-content');
-    
-    if (content.style.maxHeight) {
-        // Cerrar (ocultar)
-        content.style.maxHeight = null;
-        content.style.padding = '0 15px'; // Quitar padding
-        buttonElement.textContent = 'Personalizar / Añadir ➕';
+// --- LÓGICA DE CARRO: Dos modos de añadir ---
+
+// 1. MODO SIMPLE (+/-): Para ítems sin personalización (Pan Salchicha, etc.)
+function updateCart(itemId, change) {
+    const itemData = ALL_ITEMS_MAP[itemId];
+    if (!itemData || itemData.options) return;
+
+    let currentQuantity = cart[itemId] ? cart[itemId].quantity : 0;
+    let newQuantity = currentQuantity + change;
+
+    if (newQuantity < 0) return;
+
+    if (newQuantity === 0) {
+        delete cart[itemId];
     } else {
-        // Abrir (mostrar)
-        // Usar scrollHeight para ajustarse dinámicamente al contenido
-        content.style.maxHeight = content.scrollHeight + "px";
-        content.style.padding = '15px 15px'; // Añadir padding
-        buttonElement.textContent = 'Cerrar Personalización ➖';
+        // En items simples, el ID de carrito es el ID del producto
+        cart[itemId] = {
+            id: itemId, 
+            name: itemData.name,
+            price: itemData.price,
+            basePrice: itemData.price,
+            quantity: newQuantity,
+            isSimple: true 
+        };
     }
+
+    updateCartDisplay();
 }
 
-
-// --- LÓGICA DE CARRO: Solo MODO ÚNICO (Personalización visible) ---
-
-/**
- * Función central para añadir CUALQUIER ítem al carrito. 
- * Todos los ítems se añaden como elementos únicos (quantity=1) con sus detalles.
- */
+// 2. MODO COMPLEJO (Añadir al Pedido): Para ítems con personalización (Whopper, etc.)
 function addItemWithDetails(id, name, price, itemElement) {
     let details = [];
     
-    // Captura Opciones (solo si existen)
     const checkboxes = itemElement.querySelectorAll('.opciones-grupo input[type="checkbox"]');
     checkboxes.forEach(cb => {
         if (cb.checked) {
@@ -119,16 +119,16 @@ function addItemWithDetails(id, name, price, itemElement) {
         }
     });
 
-    // Captura la 'Biografía' (Notas/Instrucciones)
     const notesBox = itemElement.querySelector('.instrucciones-box');
     const notes = notesBox ? notesBox.value.trim() : '';
     
     if (notes) {
-        details.push(`Nota: ${notes}`); // Añade la biografía como una nota
+        details.push(`Nota: ${notes}`);
     }
 
     const itemDetails = details.length > 0 ? ` (${details.join(', ')})` : '';
-    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`; // Crea ID único
+    // Crea ID único para que cada personalización sea un ítem separado
+    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const itemName = name + itemDetails;
 
     cart[uniqueId] = { 
@@ -136,17 +136,16 @@ function addItemWithDetails(id, name, price, itemElement) {
         name: itemName, 
         price: price, 
         basePrice: price,
-        quantity: 1, // La cantidad es siempre 1 para ítems únicos
-        isSimple: false, // Ahora todos se tratan como ítems únicos
+        quantity: 1, // Siempre 1 unidad por cada ítem personalizado
+        isSimple: false, 
         baseId: id 
     };
     
-    // Limpia la caja de notas y opciones después de añadir
+    // Limpieza de interfaz
     if (notesBox) {
         notesBox.value = '';
     }
     checkboxes.forEach(cb => {
-        // Reinicia las opciones a su estado por defecto
         if (cb.getAttribute('data-default-checked') === 'true') {
             cb.checked = true;
         } else {
@@ -157,8 +156,7 @@ function addItemWithDetails(id, name, price, itemElement) {
     updateCartDisplay();
 }
 
-
-// 3. FUNCIÓN DE ELIMINACIÓN ÚNICA (desde el carrito detallado)
+// 3. FUNCIÓN DE ELIMINACIÓN ÚNICA (solo necesaria para ítems complejos/personalizados)
 function removeItemFromCart(uniqueId) {
     if (cart[uniqueId]) {
         delete cart[uniqueId];
@@ -167,7 +165,7 @@ function removeItemFromCart(uniqueId) {
 }
 
 
-// --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY (Mantenida) ---
+// --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY ---
 
 function calculateDeliveryFee(callback) {
     if (!MENU_DATA) {
@@ -202,7 +200,7 @@ function calculateDeliveryFee(callback) {
                 
                 const distanceKm = calculateDistance(ORIGIN_LAT, ORIGIN_LON, clientLat, clientLon);
                 
-                deliveryFee = getDeliveryCost(distanceKm);
+                deliveryFee = getDeliveryCost(distanceKm); 
                 deliveryCalculated = true; // Establecer flag
 
                 loadingMessage.style.display = 'none';
@@ -216,12 +214,12 @@ function calculateDeliveryFee(callback) {
                 
                 // Fallo: usar 0 costo, pero no marcar como calculado para intentarlo de nuevo si el usuario cambia de idea.
                 deliveryFee = 0;
-                deliveryCalculated = false;
+                deliveryCalculated = false; 
 
                 loadingMessage.style.display = 'none';
                 checkoutBtn.disabled = false;
                 
-                if (callback) callback(0, 0, 0, 0);
+                if (callback) callback(0, 0, 0, 0); 
                 updateCartDisplay(); // Forzar actualización del total con el error
             }
         );
@@ -234,7 +232,7 @@ function calculateDeliveryFee(callback) {
         loadingMessage.style.display = 'none';
         checkoutBtn.disabled = false;
         
-        if (callback) callback(0, 0, 0, 0);
+        if (callback) callback(0, 0, 0, 0); 
         updateCartDisplay(); // Forzar actualización del total con el error
     }
 }
@@ -251,7 +249,7 @@ function handleDeliveryToggle() {
         deliveryFee = 0;
         deliveryCalculated = false;
         loadingMessage.style.display = 'none';
-        updateCartDisplay();
+        updateCartDisplay(); 
     }
 }
 
@@ -261,7 +259,7 @@ function handleDeliveryToggle() {
 function calculateSubtotal() {
     let subtotal = 0;
     for (const uniqueId in cart) {
-        subtotal += cart[uniqueId].price; 
+        subtotal += cart[uniqueId].price * cart[uniqueId].quantity;
     }
     return subtotal;
 }
@@ -296,7 +294,7 @@ async function loadMenuData() {
         } else {
             currentMesa = null;
             if (orderOptionsEl) { 
-                orderOptionsEl.style.display = 'flex';
+                orderOptionsEl.style.display = 'flex'; 
             }
         }
         
@@ -320,13 +318,12 @@ async function loadMenuData() {
                 
                 const isComplex = item.options && item.options.length > 0;
                 
-                // --- ESTRUCTURA DE ITEM: TODOS USAN EL MISMO CONTENEDOR DE PERSONALIZACIÓN ---
-                
-                let optionsHTML = '';
-                
                 if (isComplex) {
-                    // Si el ítem tiene opciones predefinidas, las renderizamos
-                    optionsHTML += '<h3 class="opciones-titulo">Opciones Adicionales:</h3>';
+                    // --- GENERACIÓN DE ITEM COMPLEJO (Botón Añadir + Opciones) ---
+                    let optionsHTML = '';
+                    let placeholderText = 'Instrucciones Especiales: (Ej: Poco queso, sin lechuga)';
+
+                    optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
                     optionsHTML += '<div class="opciones-grupo">';
                     item.options.forEach(option => {
                         const isChecked = option.checked ? 'checked' : '';
@@ -338,34 +335,38 @@ async function loadMenuData() {
                             </label>`;
                     });
                     optionsHTML += '</div>';
-                }
-                
-                const placeholderText = `Escribe aquí la "Biografía" o Instrucciones detalladas de tu ${item.name} (Ej: Poco queso, sin pepinillos, la carne bien cocida)`;
+                    placeholderText = 'Instrucciones: (Ej: Sin pepinillos, extra queso)';
 
-
-                menuHtml += `
-                    <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
-                        <div class="item-header">
-                            <span class="item-title">${item.name} ${topVentaTag}</span>
-                            <span class="price">${item.price.toFixed(2)}$</span>
-                            <button class="toggle-personalization-btn" onclick="togglePersonalization(this)">
-                                Personalizar / Añadir ➕
-                            </button>
-                        </div>
-                        
-                        <div class="personalization-content">
+                    menuHtml += `
+                        <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
+                            <div class="item-header">
+                                <span class="item-title">${item.name} ${topVentaTag}</span>
+                                <span class="price">${item.price.toFixed(2)}$</span>
+                            </div>
                             ${optionsHTML}
-
-                            <h3 class="opciones-titulo">Biografía (Instrucciones):</h3>
-                            <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box"></textarea>
-                            
-                            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode.parentNode)">
-                                Añadir 1 ${item.name} al Pedido
+                            <textarea placeholder="${placeholderText}" rows="2" class="instrucciones-box"></textarea>
+                            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
+                                Añadir ${item.name} al Pedido
                             </button>
-                            <hr style="border-top: 1px dashed #555; margin-top: 15px;">
                         </div>
-                    </div>
-                `;
+                    `;
+
+                } else {
+                    // --- GENERACIÓN DE ITEM SIMPLE (Botones +/-) ---
+                    menuHtml += `
+                        <div class="menu-item" data-id="${item.id}">
+                            <span class="item-info">${item.name} ${topVentaTag}</span>
+                            <div class="item-controls">
+                                <span class="price">${item.price.toFixed(2)}$</span>
+                                <div class="quantity-control">
+                                    <button class="quantity-btn" onclick="updateCart('${item.id}', -1)">-</button>
+                                    <span class="item-quantity">0</span>
+                                    <button class="quantity-btn" onclick="updateCart('${item.id}', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
             });
 
             menuHtml += `
@@ -393,36 +394,42 @@ async function loadMenuData() {
 
 function renderCartItems() {
     const cartContainer = document.getElementById('cart-items-container');
+    let cartHtml = '';
     let totalItemsInCart = Object.keys(cart).length;
 
-    if (totalItemsInCart === 0) {
-        cartContainer.style.display = 'none';
-        return;
-    }
+    // Ya que pediste ocultar el detalle, solo lo mantenemos oculto y no generamos su contenido.
+    cartContainer.style.display = 'none';
+    cartContainer.innerHTML = '';
     
-    // Ocultar el detalle y no generar HTML para simplificar la interfaz.
-    cartContainer.innerHTML = ''; 
-    cartContainer.style.display = 'none'; 
+    // El resto de la lógica de renderizado detallado (si se necesitaba) va aquí, pero lo omitimos.
 }
 
 function updateCartDisplay() {
     if (!MENU_DATA) return;
 
     let subtotal = calculateSubtotal();
-    // El total de ítems es el número de ITEMS ÚNICOS en el carrito
-    let totalItems = Object.keys(cart).length; 
+    let totalItems = 0;
+    
+    // Contar items: Los simples por cantidad, los complejos por item único
+    for (const uniqueId in cart) {
+        totalItems += cart[uniqueId].quantity;
+    }
     
     renderCartItems(); 
 
-    // Esta lógica ya no se necesita, ya que no hay contadores +/-
-    /* document.querySelectorAll('.menu-item').forEach(itemEl => { ... }); */
+    // Actualiza los contadores de ítems simples
+    document.querySelectorAll('.menu-item').forEach(itemEl => {
+        const itemId = itemEl.getAttribute('data-id');
+        const quantityElement = itemEl.querySelector('.item-quantity');
+        quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
+    });
     
-    // Actualiza el badge del contador de ítems (total de ítems únicos)
+    // Actualiza el badge del contador de ítems
     document.getElementById('cart-item-count').textContent = totalItems;
     document.getElementById('cart-item-count').style.display = totalItems > 0 ? 'inline-block' : 'none';
 
 
-    const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked;
+    const isDelivery = currentMesa ? false : document.getElementById('delivery-checkbox').checked; 
     
     const deliveryDetails = document.getElementById('delivery-details');
     const checkoutBtn = document.getElementById('checkout-btn');
@@ -496,7 +503,7 @@ function updateCartDisplay() {
 }
 
 
-// --- Lógica de Envío (Mantenida) ---
+// --- Lógica de Envío (Incluye GPS y Mesa) ---
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
@@ -504,13 +511,28 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     let message = "🛒 *NUEVO PEDIDO PA QUE WAINER* 🍔\n\n";
     
     let index = 1;
+    // MODO REVERTIDO: Agrupa ítems simples, lista ítems complejos por separado
+    const consolidatedCart = {};
+
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
-        const itemQty = 1; 
-        const itemName = item.name;
-        const itemPrice = item.price; 
+        if (item.isSimple) {
+            // Agrupar ítems simples
+            consolidatedCart[item.id] = consolidatedCart[item.id] || { name: item.name, quantity: 0, price: item.price };
+            consolidatedCart[item.id].quantity += item.quantity;
+        } else {
+            // Ítems complejos/personalizados se listan individualmente
+            consolidatedCart[uniqueId] = item;
+        }
+    }
 
-        message += `${index}. *1x* ${itemName} = ${itemPrice.toFixed(2)}$\n`;
+    for (const id in consolidatedCart) {
+        const item = consolidatedCart[id];
+        const itemQty = item.quantity;
+        const itemName = item.name;
+        const itemPrice = item.price * itemQty;
+
+        message += `${index}. *${itemQty}x* ${itemName} = ${itemPrice.toFixed(2)}$\n`; 
         index++;
     }
 
@@ -563,7 +585,7 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
         servicio: serviceType,
         distancia: distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "N/A",
         // Concatenar los detalles de los ítems en un formato legible
-        detalle_pedido: Object.values(cart).map(item => `1x ${item.name}`).join('; '),
+        detalle_pedido: Object.values(consolidatedCart).map(item => `${item.quantity}x ${item.name}`).join('; '),
         ubicacion_url: mapsUrlForLog
     };
 
