@@ -9,7 +9,7 @@ let deliveryFee = 0;
 let deliveryCalculated = false; // Flag para evitar recalcular
 let userLocation = null;
 
-// >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<
+// >>> CONFIGURACIÓN PARA EL REGISTRO DE PEDIDOS EN GOOGLE SHEETS <<<\
 const LOG_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzpqx39mQ4VND0pvAp2udcJbugOI995I80QI18eME0tJ-BMlUOq2xqEuAT_6n2Gijnn/exec'; 
 // =================================================================
 
@@ -22,7 +22,8 @@ function filterMenu() {
 
     categories.forEach(category => {
         const categoryName = category.querySelector('h2').textContent.toLowerCase();
-        const items = category.querySelectorAll('.menu-item, .menu-item-complex'); 
+        // Ahora todos los ítems tienen la clase .menu-item-complex
+        const items = category.querySelectorAll('.menu-item-complex');
         let categoryMatches = categoryName.includes(searchTerm);
         let itemFound = false;
 
@@ -78,64 +79,39 @@ function getDeliveryCost(distanceKm) {
     return Math.max(minCost, distanceKm * ratePerKm);
 }
 
+// --- LÓGICA DE INTERFAZ: Plegar/Desplegar Personalización ---
 
-// --- LÓGICA DE CARRO: Dos modos de añadir ---
-
-// 1. MODO SIMPLE (+/-): Para ítems sin personalización (Pan Salchicha, etc.)
-// AHORA: Usa la lógica de ítems únicos y llama a un prompt al añadir (+)
-function updateCart(itemId, change, itemElement) {
-    const itemData = ALL_ITEMS_MAP[itemId];
-    // Si el ítem tiene opciones (es complejo), debe usar addItemWithDetails
-    if (!itemData || itemData.options) return; 
-
-    // --- Lógica de ADICIÓN (+) ---
-    if (change > 0) {
-        // Al presionar '+', pedimos la biografía/instrucción
-        const instruction = prompt(`Personaliza tu ${itemData.name}:\n\nEscribe aquí cualquier instrucción o biografía (Ej: con poca salsa, sin tomate, bien tostado, etc.).\n\nPresiona Aceptar para añadir al pedido.`);
-
-        if (instruction === null || (instruction.trim() === "" && Object.keys(cart).length > 0)) {
-            // Si cancela o no escribe nada, pero ya hay items en el carrito, no hacemos nada.
-            return;
-        }
-
-        const details = instruction.trim() ? ` (Nota: ${instruction.trim()})` : '';
-        const itemNameWithDetails = itemData.name + details;
-        
-        // Creamos un ID único, ya que cada instrucción es un ítem distinto.
-        const uniqueId = `${itemId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-        cart[uniqueId] = {
-            id: uniqueId, 
-            name: itemNameWithDetails,
-            price: itemData.price,
-            basePrice: itemData.price,
-            quantity: 1, // Siempre 1, porque es un ítem único y personalizado
-            isSimple: false, // Ahora se comporta como complejo
-            baseId: itemId // Guardamos el ID base para agrupar
-        };
-
-    // --- Lógica de ELIMINACIÓN (-) ---
-    } else if (change < 0) {
-        
-        // 1. Buscamos el ÚLTIMO ítem con ese itemId base en el carrito
-        const allItemsWithBaseId = Object.keys(cart)
-            .filter(uniqueId => cart[uniqueId].baseId === itemId)
-            .sort((a, b) => b.localeCompare(a)); // Ordenamos para encontrar el último añadido
-
-        if (allItemsWithBaseId.length > 0) {
-            const uniqueIdToRemove = allItemsWithBaseId[0];
-            delete cart[uniqueIdToRemove];
-        }
-    }
+function togglePersonalization(buttonElement) {
+    // Obtener el contenedor principal del ítem
+    const itemContainer = buttonElement.closest('.menu-item-complex');
+    // Encontrar el área de contenido plegable
+    const content = itemContainer.querySelector('.personalization-content');
     
-    updateCartDisplay();
+    if (content.style.maxHeight) {
+        // Cerrar (ocultar)
+        content.style.maxHeight = null;
+        content.style.padding = '0 15px'; // Quitar padding
+        buttonElement.textContent = 'Personalizar / Añadir ➕';
+    } else {
+        // Abrir (mostrar)
+        // Usar scrollHeight para ajustarse dinámicamente al contenido
+        content.style.maxHeight = content.scrollHeight + "px";
+        content.style.padding = '15px 15px'; // Añadir padding
+        buttonElement.textContent = 'Cerrar Personalización ➖';
+    }
 }
 
 
-// 2. MODO COMPLEJO (Añadir al Pedido): Para ítems con personalización (Whopper, etc.)
+// --- LÓGICA DE CARRO: Solo MODO ÚNICO (Personalización visible) ---
+
+/**
+ * Función central para añadir CUALQUIER ítem al carrito. 
+ * Todos los ítems se añaden como elementos únicos (quantity=1) con sus detalles.
+ */
 function addItemWithDetails(id, name, price, itemElement) {
     let details = [];
     
+    // Captura Opciones (solo si existen)
     const checkboxes = itemElement.querySelectorAll('.opciones-grupo input[type="checkbox"]');
     checkboxes.forEach(cb => {
         if (cb.checked) {
@@ -143,16 +119,16 @@ function addItemWithDetails(id, name, price, itemElement) {
         }
     });
 
+    // Captura la 'Biografía' (Notas/Instrucciones)
     const notesBox = itemElement.querySelector('.instrucciones-box');
-    // Renombramos la caja de notas para que parezca la "biografía" para consistencia
-    const notes = notesBox ? notesBox.value.trim() : ''; 
+    const notes = notesBox ? notesBox.value.trim() : '';
     
     if (notes) {
-        details.push(`Nota: ${notes}`);
+        details.push(`Nota: ${notes}`); // Añade la biografía como una nota
     }
 
     const itemDetails = details.length > 0 ? ` (${details.join(', ')})` : '';
-    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const uniqueId = `${id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`; // Crea ID único
     const itemName = name + itemDetails;
 
     cart[uniqueId] = { 
@@ -160,15 +136,17 @@ function addItemWithDetails(id, name, price, itemElement) {
         name: itemName, 
         price: price, 
         basePrice: price,
-        quantity: 1,
-        isSimple: false, 
+        quantity: 1, // La cantidad es siempre 1 para ítems únicos
+        isSimple: false, // Ahora todos se tratan como ítems únicos
         baseId: id 
     };
     
+    // Limpia la caja de notas y opciones después de añadir
     if (notesBox) {
         notesBox.value = '';
     }
     checkboxes.forEach(cb => {
+        // Reinicia las opciones a su estado por defecto
         if (cb.getAttribute('data-default-checked') === 'true') {
             cb.checked = true;
         } else {
@@ -179,6 +157,7 @@ function addItemWithDetails(id, name, price, itemElement) {
     updateCartDisplay();
 }
 
+
 // 3. FUNCIÓN DE ELIMINACIÓN ÚNICA (desde el carrito detallado)
 function removeItemFromCart(uniqueId) {
     if (cart[uniqueId]) {
@@ -188,7 +167,7 @@ function removeItemFromCart(uniqueId) {
 }
 
 
-// --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY (Idea #3) ---
+// --- LÓGICA DE CÁLCULO INMEDIATO DE DELIVERY (Mantenida) ---
 
 function calculateDeliveryFee(callback) {
     if (!MENU_DATA) {
@@ -282,7 +261,6 @@ function handleDeliveryToggle() {
 function calculateSubtotal() {
     let subtotal = 0;
     for (const uniqueId in cart) {
-        // Como cada ítem único representa 1 unidad, solo sumamos el precio
         subtotal += cart[uniqueId].price; 
     }
     return subtotal;
@@ -342,11 +320,13 @@ async function loadMenuData() {
                 
                 const isComplex = item.options && item.options.length > 0;
                 
+                // --- ESTRUCTURA DE ITEM: TODOS USAN EL MISMO CONTENEDOR DE PERSONALIZACIÓN ---
+                
+                let optionsHTML = '';
+                
                 if (isComplex) {
-                    // --- GENERACIÓN DE ITEM COMPLEJO (Mantiene la personalización original) ---
-                    let optionsHTML = '';
-                    
-                    optionsHTML += '<h3 class="opciones-titulo">Personaliza tu ' + item.name + ':</h3>';
+                    // Si el ítem tiene opciones predefinidas, las renderizamos
+                    optionsHTML += '<h3 class="opciones-titulo">Opciones Adicionales:</h3>';
                     optionsHTML += '<div class="opciones-grupo">';
                     item.options.forEach(option => {
                         const isChecked = option.checked ? 'checked' : '';
@@ -358,42 +338,34 @@ async function loadMenuData() {
                             </label>`;
                     });
                     optionsHTML += '</div>';
-                    
-                    const placeholderText = `Escribe aquí la "Biografía" o Instrucciones detalladas de tu ${item.name} (Ej: Poco queso, sin pepinillos, la carne bien cocida)`;
+                }
+                
+                const placeholderText = `Escribe aquí la "Biografía" o Instrucciones detalladas de tu ${item.name} (Ej: Poco queso, sin pepinillos, la carne bien cocida)`;
 
 
-                    menuHtml += `
-                        <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
-                            <div class="item-header">
-                                <span class="item-title">${item.name} ${topVentaTag}</span>
-                                <span class="price">${item.price.toFixed(2)}$</span>
-                            </div>
-                            ${optionsHTML}
-                            <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box"></textarea>
-                            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode)">
-                                Añadir ${item.name} al Pedido
+                menuHtml += `
+                    <div class="menu-item-complex" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">
+                        <div class="item-header">
+                            <span class="item-title">${item.name} ${topVentaTag}</span>
+                            <span class="price">${item.price.toFixed(2)}$</span>
+                            <button class="toggle-personalization-btn" onclick="togglePersonalization(this)">
+                                Personalizar / Añadir ➕
                             </button>
                         </div>
-                    `;
+                        
+                        <div class="personalization-content">
+                            ${optionsHTML}
 
-                } else {
-                    // --- GENERACIÓN DE ITEM SIMPLE (CON BOTONES +/- Y LÓGICA DE PROMPT) ---
-                    menuHtml += `
-                        <div class="menu-item" data-id="${item.id}">
-                            <span class="item-info">${item.name} ${topVentaTag}</span>
-                            <div class="item-controls">
-                                <span class="price">${item.price.toFixed(2)}$</span>
-                                <div class="quantity-control">
-                                    <button class="quantity-btn" onclick="updateCart('${item.id}', -1, this.parentNode.parentNode.parentNode)">-</button>
-                                    
-                                    <span class="item-quantity" data-base-id="${item.id}">0</span>
-                                    
-                                    <button class="quantity-btn" onclick="updateCart('${item.id}', 1, this.parentNode.parentNode.parentNode)">+</button>
-                                </div>
-                            </div>
+                            <h3 class="opciones-titulo">Biografía (Instrucciones):</h3>
+                            <textarea placeholder="${placeholderText}" rows="3" class="instrucciones-box"></textarea>
+                            
+                            <button class="add-to-cart-btn full-width" onclick="addItemWithDetails('${item.id}', '${item.name}', ${item.price}, this.parentNode.parentNode)">
+                                Añadir 1 ${item.name} al Pedido
+                            </button>
+                            <hr style="border-top: 1px dashed #555; margin-top: 15px;">
                         </div>
-                    `;
-                }
+                    </div>
+                `;
             });
 
             menuHtml += `
@@ -437,26 +409,13 @@ function updateCartDisplay() {
     if (!MENU_DATA) return;
 
     let subtotal = calculateSubtotal();
-    let totalItems = 0;
-    
     // El total de ítems es el número de ITEMS ÚNICOS en el carrito
-    totalItems = Object.keys(cart).length;
+    let totalItems = Object.keys(cart).length; 
     
     renderCartItems(); 
 
-    // --- LÓGICA NUEVA: Actualizar los contadores de ítems simples ---
-    const baseIdCounts = {};
-    for (const uniqueId in cart) {
-        const baseId = cart[uniqueId].baseId;
-        baseIdCounts[baseId] = (baseIdCounts[baseId] || 0) + 1;
-    }
-
-    document.querySelectorAll('.menu-item').forEach(itemEl => {
-        const itemId = itemEl.getAttribute('data-id');
-        const quantityElement = itemEl.querySelector('.item-quantity');
-        quantityElement.textContent = baseIdCounts[itemId] || 0;
-    });
-    // -----------------------------------------------------------------
+    // Esta lógica ya no se necesita, ya que no hay contadores +/-
+    /* document.querySelectorAll('.menu-item').forEach(itemEl => { ... }); */
     
     // Actualiza el badge del contador de ítems (total de ítems únicos)
     document.getElementById('cart-item-count').textContent = totalItems;
@@ -537,7 +496,7 @@ function updateCartDisplay() {
 }
 
 
-// --- Lógica de Envío (Incluye GPS y Mesa) ---
+// --- Lógica de Envío (Mantenida) ---
 
 function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     
@@ -547,7 +506,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     let index = 1;
     for (const uniqueId in cart) {
         const item = cart[uniqueId];
-        // La cantidad es 1, ya que cada entrada en el carrito es un ítem único y personalizado
         const itemQty = 1; 
         const itemName = item.name;
         const itemPrice = item.price; 
@@ -559,7 +517,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
     message += "\n----------------------------------\n";
     
     // Corrected Google Maps URL using a standard format that works with coordinates
-    // Nota: El formato real para Google Maps es http://maps.google.com/?q=lat,lon
     const mapsUrl = distanceKm > 0 ? `http://maps.google.com/?q=${lat},${lon}` : "N/A";
     
     if (currentMesa) {
