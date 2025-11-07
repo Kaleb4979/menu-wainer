@@ -22,12 +22,12 @@
             "name": "🍟 Salchi Papas y Cabimeras! 💨",
             "slogan": "ILo Mejor de La Ciudad.",
             "items": [
-                {"id": "Salchipapa", "name": "Salchipapa", "price": 5.00, "top_venta": false},
-                {"id": "Salchipapa FULL", "name": "Salchipapa FULL", "price": 8.00, "top_venta": false},
-                {"id": "Salchipapa", "name": "Salchipapa Extra Grande", "price": 14.00, "top_venta": false},
-                {"id": "Cabimera", "name": "Cabimera", "price": 5.00, "top_venta": false},
-                {"id": "Cabimera FULL", "name": "Cabimera FULL", "price": 14.00, "top_venta": false},
-                {"id": "Cabimera Extra Grande", "name": "Cabimera Extra Grande", "price": 15.00, "top_venta": true}
+                {"id": "salchipapa-normal", "name": "Salchipapa", "price": 5.00, "top_venta": false},
+                {"id": "salchipapa-full", "name": "Salchipapa Full", "price": 8.00, "top_venta": false},
+                {"id": "salchipapa-extra-grande", "name": "Salchipapa Extra Grande", "price": 14.00, "top_venta": false},
+                {"id": "cabimera-normal", "name": "Cabimera", "price": 5.00, "top_venta": false},
+                {"id": "cabimera-full", "name": "Cabimera Full", "price": 14.00, "top_venta": false},
+                {"id": "cabimera-extra-grande", "name": "Cabimera Extra Grande", "price": 15.00, "top_venta": true}
             ]
         },
         {
@@ -86,14 +86,14 @@
                 {"id": "pata-full", "name": "Patacón Extra Full", "price": 9.00, "top_venta": false}
             ]
         },
-                {
+        {
             "name": "🍔🥤 COMBOS POPULARES 10",
             "slogan": "Los Mejores Combos de La Ciudad.",
             "items": [
-                {"id": "10 Mini Hamburguesas + Refresco litro y Medio", "name": "10 Mini Hamburguesas+Refresco litro y Medio", "price": 10.00, "top_venta": false},
-                {"id": "10 Tumbas Ranchos Tradicional + Refresco Litro y Medio", "name": "10 Tumbas Ranchos Tradicional", "price": 10.00, "top_venta": false},
-                {"id": "10 Perros Calientes ", "name": "10 Perros Calientes", "price": 10.00, "top_venta": true},
-                {"id": "4 WHOPPER Proteinas a preferencia + Servicio de Papa + Refresco Litro y Medio", "name": "4 WHOPPER Proteinas a preferencia + Servicio de Papa + Refresco Litro y Medio", "price": 15.00, "top_venta": false}
+                {"id": "combo-mini-hamb", "name": "10 Mini Hamburguesas+Refresco litro y Medio", "price": 10.00, "top_venta": false},
+                {"id": "combo-tumbarranchos", "name": "10 Tumbas Ranchos Tradicional", "price": 10.00, "top_venta": false},
+                {"id": "combo-perros", "name": "10 Perros Calientes", "price": 10.00, "top_venta": true},
+                {"id": "combo-whopper-full", "name": "4 WHOPPER Proteinas a preferencia + Servicio de Papa + Refresco Litro y Medio", "price": 15.00, "top_venta": false}
 
             ]
         },
@@ -103,12 +103,10 @@
             "items": [
                 {"id": "comp-yoyos", "name": "Yoyos", "price": 3.50, "top_venta": false},
                 {"id": "comp-papas", "name": "Servicio de Papas", "price": 2.50, "top_venta": false},
-                {"id": "Refresco de Vaso", "name": "Refresco de Vaso", "price": 0.50, "top_venta": false},
-                {"id": "Refresco Litro y Medio", "name": "Refresco Litro y Medio", "price": 2.50, "top_venta": false}
+                {"id": "refresco-vaso", "name": "Refresco de Vaso", "price": 0.50, "top_venta": false},
+                {"id": "refresco-litro-medio", "name": "Refresco Litro y Medio", "price": 2.50, "top_venta": false}
             ]
         }
     ]
 
 }
-
-
