@@ -384,7 +384,7 @@ async function loadMenuData() {
                 // >>> LÓGICA ESPECIAL PARA EL ENLACE DE VIDEOS <<<
                 if (item.id === 'link-videos') {
                      menuHtml += `
-                        <div class="menu-item link-item" onclick="showVideos()">
+                        <div class="menu-item link-item" data-id="${item.id}" onclick="showVideos()">
                             <span class="item-info" style="color: var(--color-wainer-gold); font-weight: bold; font-size: 1.2em;">
                                 ${item.name} 🎬
                             </span>
@@ -461,6 +461,7 @@ async function loadMenuData() {
 
     } catch (error) {
         console.error("Error al cargar o renderizar el menú:", error);
+        // Error de renderizado.
         document.getElementById('menu-content-container').innerHTML = `<p style="color:red; text-align:center;">❌ ERROR: No se pudo cargar el menú. Verifica que el archivo **menu_data.json** exista y esté correcto.</p>`;
     }
 }
@@ -489,13 +490,17 @@ function updateCartDisplay() {
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
         const quantityElement = itemEl.querySelector('.item-quantity');
-        // Solo actualiza la cantidad si es un ítem simple y no el link de videos
-        if (itemId !== 'link-videos') {
-            quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
+        
+        // *** CORRECCIÓN CRÍTICA ***: Solo procede si el elemento de cantidad existe.
+        if (quantityElement) {
+             quantityElement.textContent = cart[itemId] && cart[itemId].isSimple ? cart[itemId].quantity : 0;
         }
+        // Si quantityElement es null (como en el link de videos), la ejecución continua sin error.
     });
     
     document.getElementById('cart-item-count').textContent = totalItems;
+    // La línea que causó el error en la llamada previa ya no existe en el traceback
+    // porque es la línea 494 de este archivo la que se ha corregido.
     document.getElementById('cart-item-count').style.display = totalItems > 0 ? 'inline-block' : 'none';
 
 
@@ -675,7 +680,6 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
             message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación. El costo de delivery se calculará a la entrega.\n`;
             message += `\n*TOTAL A PAGAR (Comida - USD):* ${subtotal.toFixed(2)}$\n`;
-            // ESTA ES LA LÍNEA CORREGIDA
             message += `*TOTAL ESTIMADO (VES):* ${totalVES.toFixed(2)} VES\n`; 
         }
     } else {
