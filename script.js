@@ -675,7 +675,8 @@ function sendOrder(subtotal, finalTotal, distanceKm, lat, lon) {
             message += `❌ *SERVICIO:* DELIVERY (FALLIDO) 🚚\n`;
             message += `⚠️ *ATENCIÓN:* No se pudo obtener la ubicación. El costo de delivery se calculará a la entrega.\n`;
             message += `\n*TOTAL A PAGAR (Comida - USD):* ${subtotal.toFixed(2)}$\n`;
-            *`TOTAL ESTIMADO (VES):* ${totalVES.toFixed(2)} VES\n`;
+            // ESTA ES LA LÍNEA CORREGIDA
+            message += `*TOTAL ESTIMADO (VES):* ${totalVES.toFixed(2)} VES\n`; 
         }
     } else {
         message += `✅ *SERVICIO:* RETIRO EN TIENDA 🚶\n`;
