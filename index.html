@@ -56,7 +56,7 @@
 
         </div>
 
-        </section>
+    </section>
     
     <main id="menu-main-content" class="menu-container">
         
@@ -112,7 +112,7 @@
             
         </div>
         <div id="checkout-status-container" style="position:relative; flex-grow: 1;">
-            <button onclick="showConfirmationModal()" id="checkout-btn" disabled>
+            <button onclick="showPaymentModal()" id="checkout-btn" disabled>
                 Hacer Pedido por WhatsApp
             </button>
             <div id="cooldown-bar" class="cooldown-progress-bar" style="display:none;">
@@ -125,6 +125,58 @@
     <footer>
         <p>© 2025 Pa que Wainer. Todos los derechos reservados.</p>
     </footer>
+
+
+    <div id="payment-modal" class="payment-modal-overlay" style="display:none;">
+        <div class="payment-modal-content">
+            <h2>💳 Finalizar Pedido y Pago</h2>
+            <div class="payment-summary">
+                <p>Total a pagar: <span id="payment-total-display" class="total-amount">0.00$</span></p>
+                <p class="servicio-info">Servicio: <span id="payment-servicio-display"></span></p>
+                <div id="payment-delivery-info" style="font-size: 0.9em; color: #BBB;"></div>
+            </div>
+
+            <div class="payment-options-group">
+                <h3>Selecciona tu método de pago:</h3>
+                
+                <label class="radio-label">
+                    <input type="radio" name="payment-method" value="efectivo" onclick="showPaymentDetails('cash')">
+                    💵 Efectivo (USD)
+                </label>
+                
+                <label class="radio-label">
+                    <input type="radio" name="payment-method" value="pago_movil" onclick="showPaymentDetails('mobile')">
+                    📱 Pago Móvil (VES)
+                </label>
+            </div>
+
+            <div id="cash-details" class="payment-details-box" style="display:none;">
+                <h4>💵 Pagar en Efectivo</h4>
+                <p class="instruccion">Ingresa el monto del billete para calcular el vuelto (opcional):</p>
+                <input type="number" id="cash-given-input" min="0" step="1" placeholder="Monto entregado (Ej: 20)" oninput="calculateChange()">
+                <p id="vuelto-display" class="vuelto-text">Vuelto: 0.00$</p>
+            </div>
+
+            <div id="mobile-details" class="payment-details-box" style="display:none;">
+                <h4>📱 Datos Pago Móvil (BNC)</h4>
+                <div class="bank-details-grid">
+                    <span>Banco:</span> <strong>BNC</strong>
+                    <span>Cédula:</span> <strong>18875519</strong>
+                    <span>Teléfono:</span> <strong>04246789719</strong>
+                </div>
+                <p class="instruccion">Adjuntar comprobante (Captura o Archivo):</p>
+                <input type="file" id="comprobante-file-input">
+                <p style="font-size: 0.8em; color: #AAA;">*El comprobante será referenciado en el mensaje de WhatsApp. Debe enviarlo usted por separado.</p>
+            </div>
+            
+            <div class="modal-actions">
+                <button onclick="closePaymentModal()" class="btn-cancel">Cancelar / Volver</button>
+                <button onclick="processFinalOrder()" class="btn-confirm-whatsapp" id="btn-final-whatsapp" disabled>
+                    ✅ Enviar Pedido a WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
