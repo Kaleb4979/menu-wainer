@@ -575,9 +575,11 @@ function showPaymentModal() {
         // Almacenar los datos calculados para su uso posterior en processFinalOrder
         finalOrderData = { subtotal, total, fee, distanceKm, clientLat, clientLon, serviceText };
         
-        // Actualizar el UI del modal
+        // Calcular y mostrar el total en VES en el modal
+        const totalVES = convertToVES(total);
+
         document.getElementById('payment-modal').style.display = 'flex';
-        document.getElementById('payment-total-display').textContent = `${total.toFixed(2)}$`;
+        document.getElementById('payment-total-display').innerHTML = `${total.toFixed(2)}$ / <span style="font-size: 0.8em;">${totalVES.toFixed(2)} VES</span>`;
         document.getElementById('payment-servicio-display').textContent = serviceText;
         
         let deliveryInfo = '';
@@ -635,18 +637,24 @@ function showPaymentDetails(method) {
     const mobileDetails = document.getElementById('mobile-details');
     const finalBtn = document.getElementById('btn-final-whatsapp');
     
+    // Al seleccionar, se limpian los campos y se habilita el botón (excepto si hay validación de efectivo)
     document.getElementById('cash-given-input').value = '';
     document.getElementById('vuelto-display').textContent = 'Vuelto: 0.00$';
-    document.getElementById('comprobante-file-input').value = '';
+    
+    // Eliminado el manejo de file input
 
     if (method === 'cash') {
         cashDetails.style.display = 'block';
         mobileDetails.style.display = 'none';
-        finalBtn.disabled = false; 
+        
+        // Si el monto de efectivo es 0, deshabilitar. La función calculateChange lo maneja.
+        calculateChange(); 
+
     } else if (method === 'mobile') {
         cashDetails.style.display = 'none';
         mobileDetails.style.display = 'block';
-        finalBtn.disabled = document.getElementById('comprobante-file-input').files.length === 0;
+        // En Pago Móvil, habilitamos el botón inmediatamente con la instrucción de enviar el capture
+        finalBtn.disabled = false;
     }
 }
 
@@ -654,38 +662,29 @@ function calculateChange() {
     const total = finalOrderData ? finalOrderData.total : 0;
     const cashGiven = parseFloat(document.getElementById('cash-given-input').value) || 0;
     const vueltoDisplay = document.getElementById('vuelto-display');
+    const finalBtn = document.getElementById('btn-final-whatsapp');
     
     if (cashGiven >= total) {
         const vuelto = cashGiven - total;
         vueltoDisplay.textContent = `Vuelto: ${vuelto.toFixed(2)}$`;
-        // CORREGIDO: Usar la sintaxis correcta para variables CSS en JS
         vueltoDisplay.style.color = 'var(--color-wainer-gold)'; 
+        finalBtn.disabled = false; // Habilitar si cubre el total
     } else if (cashGiven > 0) {
         vueltoDisplay.textContent = `Faltan: ${(total - cashGiven).toFixed(2)}$`;
-        // CORREGIDO: Usar la sintaxis correcta para variables CSS en JS
         vueltoDisplay.style.color = 'var(--color-wainer-red)'; 
+        finalBtn.disabled = true; // Deshabilitar si no cubre
     } else {
         vueltoDisplay.textContent = 'Vuelto: 0.00$';
-        // CORREGIDO: Usar la sintaxis correcta para variables CSS en JS
         vueltoDisplay.style.color = 'var(--color-wainer-gold)';
+        finalBtn.disabled = true; // Deshabilitar si el campo está vacío
     }
-    
-    // Habilitar el botón solo si la cantidad es suficiente
-    document.getElementById('btn-final-whatsapp').disabled = cashGiven < total;
 }
 
 
 document.addEventListener('DOMContentLoaded', () => {
     loadMenuData();
     
-    // Listener para Pago Móvil: habilita el botón si se adjunta comprobante
-    document.getElementById('comprobante-file-input').addEventListener('change', (e) => {
-        const finalBtn = document.getElementById('btn-final-whatsapp');
-        const isMobileSelected = document.querySelector('input[name="payment-method"][value="pago_movil"]')?.checked;
-        if (isMobileSelected) {
-             finalBtn.disabled = e.target.files.length === 0;
-        }
-    });
+    // Eliminado el listener de 'change' para el file input
 
     // Añadir listener para el cálculo de vuelto
     document.getElementById('cash-given-input').addEventListener('input', calculateChange);
@@ -717,7 +716,8 @@ function processFinalOrder() {
         const cashGiven = parseFloat(document.getElementById('cash-given-input').value) || 0;
         const vuelto = cashGiven >= total ? cashGiven - total : 0;
         
-        if (cashGiven < total && !finalOrderData.currentMesa) {
+        // Esta validación ya debería haber pasado en calculateChange
+        if (cashGiven < total) { 
             checkoutBtn.disabled = false;
             checkoutBtn.textContent = '✅ Enviar Pedido a WhatsApp';
             return alert("El monto en efectivo debe cubrir el total.");
@@ -727,13 +727,11 @@ function processFinalOrder() {
         paymentDetailLog = `Efectivo. Paga con ${cashGiven.toFixed(2)}$, Vuelto ${vuelto.toFixed(2)}$`;
         
     } else if (paymentMethod === 'pago_movil') {
-        const fileInput = document.getElementById('comprobante-file-input');
-        const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : "NO ADJUNTADO";
         const totalVES = convertToVES(finalOrderData.total);
         
-        // *** CORRECCIÓN CLAVE ***: Instrucción para enviar la imagen manualmente
-        paymentDetailMessage = `\n📱 *PAGO:* Pago Móvil (VES)\n🏦 *Total en VES:* ${totalVES.toFixed(2)} VES\n📝 *COMPROBANTE:* El archivo fue seleccionado (ref: ${fileName}). *¡POR FAVOR ENVÍA LA CAPTURA DE PAGO INMEDIATAMENTE DESPUÉS DE ESTE MENSAJE!*`;
-        paymentDetailLog = `Pago Móvil VES. Archivo: ${fileName}`;
+        // *** MENSAJE ACTUALIZADO DE PAGO MÓVIL ***
+        paymentDetailMessage = `\n📱 *PAGO:* Pago Móvil (VES)\n\n💰 *Total en USD:* ${finalOrderData.total.toFixed(2)}$\n🏦 *Total en VES (a pagar):* ${totalVES.toFixed(2)} VES\n\n📝 *INSTRUCCIÓN:* ¡POR FAVOR ENVÍA LA CAPTURA DE PAGO INMEDIATAMENTE DESPUÉS DE ESTE MENSAJE PARA CONFIRMAR TU ORDEN!`;
+        paymentDetailLog = `Pago Móvil VES. Total VES: ${totalVES.toFixed(2)}`;
     }
 
     // 2. Construir mensaje de WhatsApp
