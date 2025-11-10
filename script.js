@@ -438,9 +438,6 @@ function updateCartDisplay() {
         totalItems += cart[uniqueId].quantity;
     }
     
-    // Asumiendo que renderCartItems está definido en el código original (no incluido aquí)
-    // renderCartItems(); 
-
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
         const quantityElement = itemEl.querySelector('.item-quantity');
@@ -661,15 +658,15 @@ function calculateChange() {
     if (cashGiven >= total) {
         const vuelto = cashGiven - total;
         vueltoDisplay.textContent = `Vuelto: ${vuelto.toFixed(2)}$`;
-        // CORREGIDO: Envolver la variable CSS en una cadena de texto
+        // CORREGIDO: Usar la sintaxis correcta para variables CSS en JS
         vueltoDisplay.style.color = 'var(--color-wainer-gold)'; 
     } else if (cashGiven > 0) {
         vueltoDisplay.textContent = `Faltan: ${(total - cashGiven).toFixed(2)}$`;
-        // CORREGIDO: Envolver la variable CSS en una cadena de texto
+        // CORREGIDO: Usar la sintaxis correcta para variables CSS en JS
         vueltoDisplay.style.color = 'var(--color-wainer-red)'; 
     } else {
         vueltoDisplay.textContent = 'Vuelto: 0.00$';
-        // CORREGIDO: Envolver la variable CSS en una cadena de texto
+        // CORREGIDO: Usar la sintaxis correcta para variables CSS en JS
         vueltoDisplay.style.color = 'var(--color-wainer-gold)';
     }
     
@@ -734,7 +731,8 @@ function processFinalOrder() {
         const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : "NO ADJUNTADO";
         const totalVES = convertToVES(finalOrderData.total);
         
-        paymentDetailMessage = `\n📱 *PAGO:* Pago Móvil (VES)\n🏦 *Total en VES:* ${totalVES.toFixed(2)} VES\n📝 *Comprobante:* ADJUNTADO por cliente (ref: ${fileName})`;
+        // *** CORRECCIÓN CLAVE ***: Instrucción para enviar la imagen manualmente
+        paymentDetailMessage = `\n📱 *PAGO:* Pago Móvil (VES)\n🏦 *Total en VES:* ${totalVES.toFixed(2)} VES\n📝 *COMPROBANTE:* El archivo fue seleccionado (ref: ${fileName}). *¡POR FAVOR ENVÍA LA CAPTURA DE PAGO INMEDIATAMENTE DESPUÉS DE ESTE MENSAJE!*`;
         paymentDetailLog = `Pago Móvil VES. Archivo: ${fileName}`;
     }
 
@@ -838,9 +836,5 @@ function logOrderToSheet(logData) {
     })
     .catch(error => console.error('Error al intentar registrar el pedido:', error));
 }
-
-
-// La función showConfirmationModal (renombrada para el nuevo flujo) ya no se usa, ya que showPaymentModal la reemplaza.
-// Mantenemos el nombre showPaymentModal en el HTML.
 
 document.addEventListener('DOMContentLoaded', loadMenuData);
