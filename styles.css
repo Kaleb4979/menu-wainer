@@ -651,17 +651,175 @@ footer { display: none; }
 
 /* --- FIN ESTILOS DE PUBLICIDAD --- */
 
+/* ================================================= */
+/* === MODAL DE PAGO Y SUS COMPONENTES === */
+/* ================================================= */
+
+.payment-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.payment-modal-content {
+    background-color: #222;
+    padding: 25px;
+    border-radius: 10px;
+    max-width: 90%;
+    width: 450px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    color: var(--color-wainer-light);
+}
+
+.payment-modal-content h2 {
+    color: var(--color-wainer-gold);
+    border-bottom: 2px solid var(--color-wainer-red);
+    padding-bottom: 10px;
+    margin-top: 0;
+    font-size: 1.5em;
+    text-align: center;
+}
+
+.payment-summary {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.total-amount {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--color-whatsapp-green);
+    margin-left: 10px;
+}
+
+.payment-options-group {
+    margin-bottom: 20px;
+}
+
+.payment-options-group h3 {
+    font-size: 1.1em;
+    color: var(--color-wainer-gold);
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.radio-label {
+    display: block;
+    background-color: #303030;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: bold;
+}
+
+.radio-label:hover {
+    background-color: #444;
+}
+
+.radio-label input[type="radio"] {
+    margin-right: 10px;
+    accent-color: var(--color-wainer-red);
+}
+
+.payment-details-box {
+    border: 1px solid #444;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    background-color: #1a1a1a;
+}
+
+.payment-details-box h4 {
+    color: var(--color-wainer-red);
+    margin-top: 0;
+    border-bottom: 1px dashed #444;
+    padding-bottom: 5px;
+}
+
+.payment-details-box input[type="number"],
+.payment-details-box input[type="file"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #333;
+    color: var(--color-wainer-light);
+}
+
+.bank-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 5px 10px;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.bank-details-grid strong {
+    color: var(--color-wainer-gold);
+}
+
+.vuelto-text {
+    font-weight: bold;
+    color: var(--color-wainer-gold);
+    font-size: 1.1em;
+    margin-top: 10px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.modal-actions button {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-cancel {
+    background-color: #555;
+    color: var(--color-wainer-light);
+    width: 40%;
+}
+
+.btn-confirm-whatsapp {
+    background-color: var(--color-whatsapp-green);
+    color: var(--color-wainer-light);
+    width: 60%;
+}
+
+.btn-confirm-whatsapp:disabled {
+    background-color: #666 !important;
+    cursor: not-allowed;
+}
+
 
 /* ================================================= */
 /* === AJUSTES DE OPTIMIZACIÓN MÓVIL (Media Query) === */
-/* Se aplica a pantallas más estrechas que 550px */
 /* ================================================= */
 
 @media (max-width: 550px) {
     /* 1. Reducir el relleno (padding) de toda la barra flotante */
     .cart-float {
         padding: 8px; /* Reducir de 15px a 8px */
-        /* Aseguramos que los ítems estén siempre en el centro para ahorrar espacio */
         align-items: center; 
     }
     
