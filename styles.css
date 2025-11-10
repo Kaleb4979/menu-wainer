@@ -676,6 +676,11 @@ footer { display: none; }
     width: 450px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     color: var(--color-wainer-light);
+    
+    /* === CORRECCIÓN CLAVE PARA PC/Desktop === */
+    max-height: 90vh; /* Limitar la altura visible del modal al 90% de la ventana */
+    overflow-y: auto; /* Permitir el desplazamiento interno si el contenido es demasiado grande */
+    /* ======================================= */
 }
 
 .payment-modal-content h2 {
@@ -783,6 +788,14 @@ footer { display: none; }
     justify-content: space-between;
     margin-top: 20px;
     gap: 10px;
+    
+    /* === CORRECCIÓN CLAVE PARA PC/Desktop === */
+    /* Aseguramos que los botones siempre estén visibles aunque el modal scrollee */
+    padding-top: 15px;
+    background-color: #222; /* Fondo para que los botones sobresalgan */
+    position: sticky;
+    bottom: -25px; /* Pegar al borde inferior del modal-content (el -25px compensa el padding original del modal) */
+    /* ======================================= */
 }
 
 .modal-actions button {
@@ -862,5 +875,18 @@ footer { display: none; }
     /* 6. Asegurar que el padding del cuerpo es el adecuado para la nueva barra */
     body {
         padding-bottom: 80px; /* Reducir el espacio inferior (antes 120px) para el espacio compactado de la barra */
+    }
+    
+    /* 7. Ajuste del modal en pantallas móviles */
+    .payment-modal-content {
+        padding: 15px;
+        max-height: 95vh;
+        width: 95%;
+    }
+    
+    .modal-actions {
+        /* Despegar el sticky bottom en móvil para que no estorbe */
+        position: static; 
+        bottom: auto;
     }
 }
