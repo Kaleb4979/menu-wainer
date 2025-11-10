@@ -151,9 +151,9 @@
             </div>
 
             <div id="cash-details" class="payment-details-box" style="display:none;">
-                <h4>💵 Pagar en Efectivo</h4>
-                <p class="instruccion">Ingresa el monto del billete para calcular el vuelto (opcional):</p>
-                <input type="number" id="cash-given-input" min="0" step="1" placeholder="Monto entregado (Ej: 20)" oninput="calculateChange()">
+                <h4>💵 Pagar en Efectivo (USD)</h4>
+                <p class="instruccion">Ingresa el monto del billete para calcular el vuelto (monto mínimo igual al total):</p>
+                <input type="number" id="cash-given-input" min="0" step="1" placeholder="Monto entregado (Ej: 20)">
                 <p id="vuelto-display" class="vuelto-text">Vuelto: 0.00$</p>
             </div>
 
@@ -164,9 +164,9 @@
                     <span>Cédula:</span> <strong>18875519</strong>
                     <span>Teléfono:</span> <strong>04246789719</strong>
                 </div>
-                <p class="instruccion">Adjuntar comprobante (Captura o Archivo):</p>
-                <input type="file" id="comprobante-file-input">
-                <p style="font-size: 0.8em; color: #AAA;">*El comprobante será referenciado en el mensaje de WhatsApp. Debe enviarlo usted por separado.</p>
+                <p class="instruccion" style="font-weight: bold; color: var(--color-wainer-red);">
+                    ⚠️ Recuerda enviar la captura de pantalla del pago móvil inmediatamente después de enviar tu pedido por WhatsApp.
+                </p>
             </div>
             
             <div class="modal-actions">
