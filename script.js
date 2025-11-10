@@ -34,6 +34,7 @@ function showMenuContent() {
 }
 
 function convertToVES(usdAmount) {
+    // Si la tasa no se ha cargado (ej: fallo de red), usa 0 para evitar errores
     if (!MENU_DATA || !MENU_DATA.info.exchange_rate || isNaN(MENU_DATA.info.exchange_rate)) return 0;
     return usdAmount * MENU_DATA.info.exchange_rate;
 }
@@ -182,7 +183,6 @@ function calculateDeliveryFee(callback) {
         if (callback) callback(0, 0, 0, 0);
         return;
     }
-    // ... [código de calculateDeliveryFee sin cambios] ...
     const checkoutBtn = document.getElementById('checkout-btn');
     const loadingMessage = document.getElementById('loading-location');
     
@@ -281,8 +281,7 @@ function handleDeliveryToggle() {
 }
 
 
-// --- LÓGICA DE CARGA Y DISPLAY (sin cambios funcionales) ---
-// ... [código de loadMenuData y updateCartDisplay sin cambios] ...
+// --- LÓGICA DE CARGA Y DISPLAY ---
 
 async function loadMenuData() {
     try {
@@ -439,7 +438,9 @@ function updateCartDisplay() {
         totalItems += cart[uniqueId].quantity;
     }
     
-    // ... (omitted cart display rendering logic for brevity, assumed functional) ...
+    // Asumiendo que renderCartItems está definido en el código original (no incluido aquí)
+    // renderCartItems(); 
+
     document.querySelectorAll('.menu-item').forEach(itemEl => {
         const itemId = itemEl.getAttribute('data-id');
         const quantityElement = itemEl.querySelector('.item-quantity');
@@ -561,7 +562,6 @@ function updateCartDisplay() {
 function showPaymentModal() {
     if (!MENU_DATA) return alert("Error: El menú no se ha cargado.");
     
-    // 1. Verificar límites de tiempo y carrito vacío (similar a showConfirmationModal)
     const lastOrderTime = localStorage.getItem('lastOrderTime');
     const now = Date.now();
     const COOLDOWN_SECS = MENU_DATA.info.cooldown_seconds;
@@ -569,7 +569,6 @@ function showPaymentModal() {
     if (lastOrderTime && (now - lastOrderTime) < (COOLDOWN_SECS * 1000)) return;
     if (Object.keys(cart).length === 0) return alert("Por favor, agregue al menos un artículo al carrito antes de hacer el pedido.");
 
-    // 2. Determinar si se requiere Geolocalización para obtener el total final
     const subtotal = calculateSubtotal();
     const isDelivery = document.getElementById('delivery-checkbox').checked && !currentMesa;
     const checkoutBtn = document.getElementById('checkout-btn');
@@ -597,11 +596,10 @@ function showPaymentModal() {
         document.getElementById('cash-details').style.display = 'none';
         document.getElementById('mobile-details').style.display = 'none';
         
-        // Asegurarse de que ningún radio esté marcado al abrir
         document.querySelectorAll('input[name="payment-method"]').forEach(radio => radio.checked = false);
         
         loadingMessage.style.display = 'none';
-        checkoutBtn.disabled = false; // Rehabilita el botón de la barra flotante (oculto por el modal)
+        checkoutBtn.disabled = false; 
     };
 
     if (currentMesa) {
@@ -640,7 +638,6 @@ function showPaymentDetails(method) {
     const mobileDetails = document.getElementById('mobile-details');
     const finalBtn = document.getElementById('btn-final-whatsapp');
     
-    // Limpiar campos
     document.getElementById('cash-given-input').value = '';
     document.getElementById('vuelto-display').textContent = 'Vuelto: 0.00$';
     document.getElementById('comprobante-file-input').value = '';
@@ -648,12 +645,10 @@ function showPaymentDetails(method) {
     if (method === 'cash') {
         cashDetails.style.display = 'block';
         mobileDetails.style.display = 'none';
-        // En efectivo, el botón se habilita inmediatamente (se asume que el pago se realizará)
         finalBtn.disabled = false; 
     } else if (method === 'mobile') {
         cashDetails.style.display = 'none';
         mobileDetails.style.display = 'block';
-        // En pago móvil, el botón se habilita al subir el comprobante (ver listener en DOMContentLoaded)
         finalBtn.disabled = document.getElementById('comprobante-file-input').files.length === 0;
     }
 }
@@ -666,26 +661,30 @@ function calculateChange() {
     if (cashGiven >= total) {
         const vuelto = cashGiven - total;
         vueltoDisplay.textContent = `Vuelto: ${vuelto.toFixed(2)}$`;
-        vueltoDisplay.style.color = var(--color-wainer-gold);
+        // CORREGIDO: Envolver la variable CSS en una cadena de texto
+        vueltoDisplay.style.color = 'var(--color-wainer-gold)'; 
     } else if (cashGiven > 0) {
         vueltoDisplay.textContent = `Faltan: ${(total - cashGiven).toFixed(2)}$`;
-        vueltoDisplay.style.color = var(--color-wainer-red);
+        // CORREGIDO: Envolver la variable CSS en una cadena de texto
+        vueltoDisplay.style.color = 'var(--color-wainer-red)'; 
     } else {
         vueltoDisplay.textContent = 'Vuelto: 0.00$';
-        vueltoDisplay.style.color = var(--color-wainer-gold);
+        // CORREGIDO: Envolver la variable CSS en una cadena de texto
+        vueltoDisplay.style.color = 'var(--color-wainer-gold)';
     }
     
-    // Habilitar el botón si la cantidad cubre el total o si es Pago Móvil (ya manejado por showPaymentDetails)
+    // Habilitar el botón solo si la cantidad es suficiente
     document.getElementById('btn-final-whatsapp').disabled = cashGiven < total;
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
     loadMenuData();
     
-    // Listener para habilitar el botón si se adjunta comprobante
+    // Listener para Pago Móvil: habilita el botón si se adjunta comprobante
     document.getElementById('comprobante-file-input').addEventListener('change', (e) => {
         const finalBtn = document.getElementById('btn-final-whatsapp');
-        const isMobileSelected = document.querySelector('input[name="payment-method"][value="pago_movil"]').checked;
+        const isMobileSelected = document.querySelector('input[name="payment-method"][value="pago_movil"]')?.checked;
         if (isMobileSelected) {
              finalBtn.disabled = e.target.files.length === 0;
         }
@@ -804,11 +803,10 @@ function processFinalOrder() {
         fecha: new Date().toLocaleDateString('es-VE'),
         hora: new Date().toLocaleTimeString('es-VE'),
         total: total.toFixed(2),
-        servicio: serviceText.split(' ')[0], // Solo Delivery o Retiro, etc.
+        servicio: serviceText.split(' ')[0],
         distancia: distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "N/A",
         detalle_pedido: Object.values(consolidatedCart).map(item => `${item.quantity}x ${item.name}`).join('; '),
         ubicacion_url: mapsUrlForLog,
-        // Nuevo campo
         metodo_pago: paymentDetailLog
     };
 
@@ -840,3 +838,9 @@ function logOrderToSheet(logData) {
     })
     .catch(error => console.error('Error al intentar registrar el pedido:', error));
 }
+
+
+// La función showConfirmationModal (renombrada para el nuevo flujo) ya no se usa, ya que showPaymentModal la reemplaza.
+// Mantenemos el nombre showPaymentModal en el HTML.
+
+document.addEventListener('DOMContentLoaded', loadMenuData);
